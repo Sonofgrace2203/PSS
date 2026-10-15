@@ -1,0 +1,252 @@
+@page "/SimulationWorkSpace"
+@using pss.Components.Shared
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="flex flex-spacebetween">
+    <div class="mgb-10">
+        <h2 class="mg-0 fsz-20 cl-primary">Projectile Motion</h2>
+    </div>
+
+    <div>
+        <i class="mdi mdi-star-outline fsz-25"></i>
+        <i class="mdi mdi-share-outline fsz-25"></i>
+        <i class="mdi mdi-menu-swap fsz-25"></i>
+    </div>
+</div>
+
+<div class="mgb-10">
+    <div class="flex flow flex-start">
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01" @onclick="IsSimulation">Simulation</button>
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01" @onclick="IsGraph">Graph</button>
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01">Data Table</button>
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01">Notes</button>
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01">Export</button>
+    </div>
+</div>
+
+<div class="scroll-y" style="height: 90vh;">
+    <div style="display: @(isSimulation ? "block" : "none");">
+        <div class="row responsive miwx-3 mgb">
+            <div class="mgt colm-2 miwx-25 mawx-3 pd bg-card corner-2 bdl mgr-5 mgb-10">
+                <div class="flex flex-spacebetween flex-center mgb-5">
+                    <h3 class="mg-0 pdb-5 fsz-15 pdb"> Parameters</h3>
+                    <i class="mdi mdi-menu-down fsz-25 mgt--5 fw-bold"></i>
+                </div>
+                <div class="grid gap-1 colm-3">
+                    <div class="mgb-10">
+                        <div class="wf mgb-5">
+                            <h5 class="mg-0 pdb-2">Initial Velicity (u)</h5>
+                            <div class="wf">
+                                <input type="number" placeholder="30" class="corner-2 pd block bd wp-80">
+                                <div class="bg-black-01 corner-3 bd hx-01 mgt-2">
+                                    <div class="bg-primary corner-3 hx-01 wx-05"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wf mgb-5">
+                            <h5 class="mg-0 pdb-2">Launch Angle (^)</h5>
+                            <div class="wf">
+                                <input type="number" placeholder="45" class="corner-2 pd block bd wp-80">
+                                <div class="bg-black-01 corner-3 bd hx-01 mgt-2">
+                                    <div class="bg-primary corner-3 hx-01 wx-05"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wf">
+                            <h5 class="mg-0 pdb-2">Gravity (m/r)</h5>
+                            <div class="wf">
+                                <input type="number" placeholder="0.41" class="corner-2 pd block bd wp-80">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wf">
+                        <div class="wf">
+                            <select name="" id="" class="corner-2 pd pd wf">
+                                <option value="More Options">More Options</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button class="bd corner-1 pd">Reset</button>
+                        <button class="bd corner-1 pd bg-primary" @onclick="RunSimulation">Run Simulation</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: @(runSimulation ? "block" : "none");">
+                <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1">
+
+                    <div class="mgb-5 bd corner-2 shadow-border-2 pd">
+                        <div class="flex flex-spacebetween">
+                            <h4 class="mg-0 pdb fsz-13 cl-primary">Console Output</h4>
+                            @if (isQueue)
+                            {
+                                <p class="mg-0 fsz-12 cl-gray">Queued</p>
+                            }
+                            else if (isRunning)
+                            {
+                                <p class="mg-0 fsz-12 cl-fatal">Running</p>
+                            }
+                            else
+                            {
+                                <p class="mg-0 fsz-12 cl-success">Completed</p>
+                            }
+                        </div>
+
+                        <div class="mgb-5">
+                            <div class="bg-black-01 corner-3 bd hx-01 mgt-2">
+                                <div class="bg-success corner-3 hx-01 wx-05"></div>
+                            </div>
+                            <div>
+                                <i class="mg-0 fsz-12">30%</i> / <b class="mg-0 fsz-12">100%</b>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex flex-spacebetween pdb-1 mgb bdb">
+                                <h4 class="mg-o fsz-12">Time Step</h4>
+                                <p class="mg-0 fsz-12 op-6">0.01</p>
+                            </div>
+                            <div class="flex flex-spacebetween pdb-1 mgb bdb">
+                                <h4 class="mg-o fsz-12">Time Step</h4>
+                                <p class="mg-0 fsz-12 op-6">0.01</p>
+                            </div>
+                            <div class="flex flex-spacebetween pdb-1 mgb bdb">
+                                <h4 class="mg-o fsz-12">Time Step</h4>
+                                <p class="mg-0 fsz-12 op-6">0.01</p>
+                            </div>
+                            <div class="flex flex-spacebetween pdb-1 mgb bdb">
+                                <h4 class="mg-o fsz-12">Time Step</h4>
+                                <p class="mg-0 fsz-12 op-6">0.01</p>
+                            </div>
+                        </div>
+                    </div>
+                                
+                    <div class="mgb-5">
+                        <h4 class="mg-0 pdb fsz-13 cl-primary">Live Graph</h4>
+
+                        <img src="icons/dodorice.jpeg" alt="" class="wf">
+
+                        <div class="bg-black-01 corner-3 bd hx-01 mgt-2">
+                            <div class="bg-secondary corner-3 hx-01 wx-05"></div>
+                        </div>
+
+                        <div class="mgt flex flex-center">
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01">
+                                <i class="mdi mdi-play fsz-25"></i>
+                            </button>
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01">
+                                <i class="mdi mdi-skip-backward fsz-25"></i>
+                            </button>
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01">
+                                <i class="mdi mdi-skip-forward fsz-25"></i>
+                            </button>
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01">
+                                <i class="mdi mdi-pause fsz-25"></i>
+                            </button>
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01">
+                                <select name="" id="" class="bd-none fsz-20 wx-1 bg-transparent">
+                                    <option value="More Options">tx</option>
+                                </select>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-primary-01 flex flex-spacearound corner-2 pd bd wvg-5">
+                        <div class="flex flex-center stack bdr wf">
+                            <h5 class="mg-0 pdb op-5">Range</h5>
+                            <h4 class="mg-0">61.20m</h4>
+                        </div>
+                        <div class="flex flex-center stack bdr wf">
+                            <h5 class="mg-0 pdb op-5">Max Height</h5>
+                            <h4 class="mg-0">11.47m</h4>
+                        </div>
+                        <div class="flex flex-center stack bdr wf">
+                            <h5 class="mg-0 pdb op-5">Time of Flight</h5>
+                            <h4 class="mg-0">4.33m</h4>
+                        </div>
+                        <div class="flex flex-center stack wf">
+                            <h5 class="mg-0 pdb op-5">Final Velocity</h5>
+                            <h4 class="mg-0">29.43m</h4>
+                        </div>
+                    </div>
+
+                    <div class="bg-primary-01 grid gap-1 colm-15 corner-2 pd bd wvl-5">
+                        <div class="flex flex-center stack bdr wf mgb-5 mgt-5">
+                            <h5 class="mg-0 pdb op-5">Range</h5>
+                            <h4 class="mg-0">61.20m</h4>
+                        </div>
+                        <div class="flex flex-center stack wf mgb-5 mgt-5">
+                            <h5 class="mg-0 pdb op-5">Max Height</h5>
+                            <h4 class="mg-0">11.47m</h4>
+                        </div>
+                        <div class="flex flex-center stack bdr wf mgb-5 mgt-5">
+                            <h5 class="mg-0 pdb op-5">Time of Flight</h5>
+                            <h4 class="mg-0">4.33m</h4>
+                        </div>
+                        <div class="flex flex-center stack wf mgb-5 mgt-5">
+                            <h5 class="mg-0 pdb op-5">Final Velocity</h5>
+                            <h4 class="mg-0">29.43m</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: @(isGraph ? "block" : "none");">
+        <h3 class="mg-0 text-center pdb-10 fsz-16">Projectile Motion - Graphs</h3>
+        <div class="grid gap-1 colm-35">
+            <div>
+                <h5 class="text-center mg-0 pdb-5">Position vs Time</h5>
+                <img src="icons/dodorice.jpeg" alt="" class="wf">
+            </div>
+
+            <div>
+                <h5 class="text-center mg-0 pdb-5">Velocity vs Time</h5>
+                <img src="icons/dodorice.jpeg" alt="" class="wf">
+            </div>
+
+            <div>
+                <h5 class="text-center mg-0 pdb-5">Energy vs Time</h5>
+                <img src="icons/dodorice.jpeg" alt="" class="wf">
+            </div>
+
+            <div>
+                <h5 class="text-center mg-0 pdb-5">Displacement vs Time</h5>
+                <img src="icons/dodorice.jpeg" alt="" class="wf">
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isSimulation = true;
+    private bool isGraph = false;
+    private bool runSimulation = false;
+
+    private bool isQueue = false;
+    private bool isRunning = false;
+
+    private void IsSimulation()
+    {
+        isSimulation = true;
+        isGraph = false;
+    }
+
+    private void IsGraph()
+    {
+        isSimulation = false;
+        isGraph = true;
+    }
+
+    private void RunSimulation()
+    {
+        runSimulation = true;
+    }
+}

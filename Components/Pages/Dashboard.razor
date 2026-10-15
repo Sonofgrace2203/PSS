@@ -1,0 +1,73 @@
+@page "/"
+@using pss.Components.Shared
+
+@inject NavigationManager Nav
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="mgb-10">
+    <h2 class="mg-0 fsz-20 cl-primary">Welcome back, Mustapha</h2>
+    <p class="mg-0 fsz-13">What would you like to explore today?</p>
+</div>
+
+<div class="mgb-10">
+    <div class="bg-primary-01 pdl pdr corner-2 colm-25 mgb" style="cursor: pointer;" @onclick='() => Nav.NavigateTo("SimulationLibrary")'>
+        <RecentCard Title="Quick Start" SubTitle="Jump into a simulation" />
+    </div>
+
+    <div class="flex flex-start colm-25">
+        <div class="corner-2 flex flex-center wf">
+            <input type="text" placeholder="🔍 Search Simulations, topics..." class="corner-2 bd bg-card pd wf" />
+        </div>
+    </div>
+</div>
+
+<div class="scroll-y" style="height: 90vh;">
+    <div class="mgb-10">
+        <h3 class="mg-0 pdb-2 fsz-15 cl-primary">Popular Simulations</h3>
+        <div class="grid gap-1 colm-15">
+            <StatCard Title="Projectile Motion" SubTitle="2D Motion" />
+            <StatCard Title="Simple Pendulum" SubTitle="Oscillations" />
+            <StatCard Title="Spring-Mass System" SubTitle="SHM & Waves" />
+            <StatCard Title="Electric Field" SubTitle="Electrostatics" />
+        </div>
+    </div>
+
+    <div class="row responsive miwx-3 wvg-5">
+        <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1 mgr-5">
+            <h3 class="mg-0 pdb-5 fsz-15 pdb cl-primary">Recent Simulations</h3>
+            <div class="grid gap-1 colm-3">
+                <RecentCard Title="Projectile Motion" SubTitle="20 May, 2026. 10:30 AM" />
+                <RecentCard Title="Simple Pendulum" SubTitle="20 May, 2026. 10:30 AM" />
+                <RecentCard Title="Magnetic Field" SubTitle="20 May, 2026. 10:30 AM" />
+                <RecentCard Title="Newton First Law" SubTitle="20 May, 2026. 10:30 AM" />
+            </div>
+        </div>
+
+        <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1">
+            <h3 class="mg-0 pdb-5 fsz-15 cl-primary">Your Statistics</h3>
+            <div class="grid gap-1 colm-3 wf">
+                <img src="icons/dodorice.jpeg" alt="" class="wf">
+            </div>
+        </div>
+    </div>
+
+    <div class="row responsive miwx-3 wvl-5 mgb">
+        <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1 mgb-5">
+            <h3 class="mg-0 pdb-5 fsz-15 pdb cl-primary">Recent Simulations</h3>
+            <div class="grid gap-1 colm-3">
+                <RecentCard Title="Projectile Motion" SubTitle="20 May, 2026. 10:30 AM" />
+                <RecentCard Title="Simple Pendulum" SubTitle="20 May, 2026. 10:30 AM" />
+                <RecentCard Title="Magnetic Field" SubTitle="20 May, 2026. 10:30 AM" />
+                <RecentCard Title="Newton First Law" SubTitle="20 May, 2026. 10:30 AM" />
+            </div>
+        </div>
+
+        <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1">
+            <h3 class="mg-0 pdb-5 fsz-15 cl-primary">Your Statistics</h3>
+            <div class="grid gap-1 colm-3 wf">
+                <img src="icons/dodorice.jpeg" alt="" class="wf">
+            </div>
+        </div>
+    </div>
+</div>

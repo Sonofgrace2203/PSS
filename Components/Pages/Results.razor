@@ -1,0 +1,60 @@
+@page "/SimulationResult"
+@using pss.Components.Shared
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="flex flex-spacebetween flow">
+    <div class="mgb-10">
+        <h2 class="mg-0 fsz-20 cl-primary">Saved Results</h2>
+        <p class="mg-0 fsz-13">View and manage your saved simulations</p>
+    </div>
+
+    <div>
+        <input type="text" placeholder="🔍 Search saved results" class="pd corner-2 bd-none bd">
+    </div>
+</div>
+
+<div class="" style="position: relative;">
+    <div class="bg-secondary-01 pd flex flex-center" style="position: absolute; right: 10px;">
+        <i class="mdi mdi-folder cl-secondary mgr-2"></i>
+        <p class="mg-0 cl-secondary fsz-12">New Folder</p>
+    </div>
+</div>
+
+
+<div class="wf mgt-25">
+    <div class="scroll-y" style="height: 90vh;">
+        <table class="wf scroll">
+            <thead>
+                <tr>
+                    <th class="text-left pd bdb cl-primary">Name</th>
+                    <th class="text-left pd bdb cl-primary">simulations</th>
+                    <th class="text-left pd bdb cl-primary">Date</th>
+                    <th class="text-left pd bdb cl-primary">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @for (int i = 1; i <= 10; i++)
+                {
+                    <tr class="">
+                        <td class="pd bdb">
+                            Projectile Motion
+                            <p class="mg-0 fsz-13 op-6">Range and height analysis</p>
+                        </td>
+
+                        <td class="pd bdb">Projectile Motion</td>
+
+                        <td class="pd bdb">30th May 2026, 10:30 AM</td>
+                
+                        <td class="pd bdb">
+                            <i class="mdi mdi-eye fsz-20 mgr-3 cl-secondary"></i>
+                            <i class="mdi mdi-download fsz-20 mgr-3 cl-secondary"></i>
+                            <i class="mdi mdi-delete fsz-20 mgr-3"></i>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,52 @@
+@page "/SimulationLibrary"
+@using pss.Components.Shared
+
+@inject NavigationManager Nav
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="mgb-10">
+    <h2 class="mg-0 fsz-20 cl-primary">All Simulations</h2>
+    <p class="mg-0 fsz-13">Choose a physics topic to explore</p>
+</div>
+
+<div class="mgb-10">
+    <div class="row responsive miwx-3 mgb-3">
+        <div class="flex flex-start colm-25">
+            <div class="corner-2 flex flex-center wf">
+                <input type="text" placeholder="🔍 Search Simulations" class="corner-2 bd bg-card pd wf" />
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flow flex-start">
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01">All</button>
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01">Mechanics</button>
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01">Electromagnetism</button>
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01">Waves</button>
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01">Thermodynamics</button>
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01">Optics</button>
+    </div>
+</div>
+
+<div class="scroll-y" style="height: 90vh;">
+    <div class="mgt mgb-5">
+        <div class="grid gap-1 colm-25">
+            <LibraryCard Title="Projectile Motion" SubTitle="Simulate the motion of an object launched into the air" OnClick="GoToWorkSpace" />
+            <LibraryCard Title="Simple Pendulum" SubTitle="Explore the motion of a simple pendulum" OnClick="GoToWorkSpace" />
+            <LibraryCard Title="Spring-Mass System" SubTitle="Model oscillation in a spring mass system" OnClick="GoToWorkSpace" />
+            <LibraryCard Title="Circular Motion" SubTitle="Uniform circular motion and related quantities" OnClick="GoToWorkSpace" />
+            <LibraryCard Title="Inclined Plane" SubTitle="Analyze motion on an inclined plane" OnClick="GoToWorkSpace" />
+            <LibraryCard Title="Conservation of Energy" SubTitle="Explore energy conservation in mechanical systems" OnClick="GoToWorkSpace" />
+            <LibraryCard Title="Collision (1D)" SubTitle="Elastic and inelastic collisions in one dimension" OnClick="GoToWorkSpace" />
+            <LibraryCard Title="Rotational Motion" SubTitle="Studey rotational kinematics and dynamics" OnClick="GoToWorkSpace" />
+        </div>
+    </div>
+</div>
+
+@code {
+    private void GoToWorkSpace()
+    {
+        Nav.NavigateTo("SimulationWorkSpace");
+    }
+}

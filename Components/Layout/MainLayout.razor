@@ -1,0 +1,33 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="wx-15 wvg-5 bg-card bd scroll-y">
+        <NavMenu />
+    </div>
+
+    <div class="bg-card" style="position: fixed; top: 0; left: 0; right: 0; z-index: 5;">
+        <div class="wf wvl-5 bg-primary-02 scroll-y">
+            <NavMenu />
+        </div>
+    </div>
+
+    <main class="scroll-y" style="height: 100vh;">
+        @* <div class="top-row px-4">
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        </div> *@
+
+        <div class="pd-5">
+            @Body
+        </div>
+
+        @* <div class="content px-4">
+            @Body
+        </div> *@
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

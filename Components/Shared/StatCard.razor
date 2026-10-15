@@ -1,0 +1,14 @@
+<div class="pd bg-primary-01 corner-3">
+    <div class="flex flex-center">
+        <img src="icons/cooking.svg" alt="" class="wx-05 hx-1 fsz-15">
+    </div>
+    <div class="text-center wf hx-05 pd">
+        <h3 class="mg-0 pdb fsz-15 text-left">@Title</h3>
+        <p class="mg-0 fsz-12 op-7 text-left">@SubTitle</p>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string SubTitle { get; set; } = "";
+}

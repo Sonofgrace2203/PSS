@@ -1,0 +1,215 @@
+@page "/Settings"
+@using pss.Components.Shared
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="flex flex-spacebetween flow">
+    <div class="mgb-10 cl-primary">
+        <h2 class="mg-0 fsz-20">Settings</h2>
+        <p class="mg-0 fsz-13">Customize your experience</p>
+    </div>
+
+    <button class="mdi mdi-tools fsz-25 round wx-05 hx-05 pd-1 bd-none bg-secondary-01 cl-secondary" @onclick="IsSetting"></button>
+</div>
+
+<div class="row responsive colm-3">
+    <div class="flex flex-start stack miwx-15 mawx-25 wvg-5">
+        <button class="bg-transparent bd-none bdl pd mgb-3">
+            <i class="mdi mdi-tools fsz-20"></i>
+            General
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3">
+            <i class=" mdi mdi-view-agenda-outline fsz-20"></i>
+            Appearance
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3">
+            <i class=" mdi mdi-console fsz-20"></i>
+            Limits & Constants
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3">
+            <i class=" mdi mdi-parachute-outline fsz-20"></i>
+            Default Parameters
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3">
+            <i class="mdi mdi-store-alert fsz-20"></i>
+            Date & Storage
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3">
+            <i class=" mdi mdi-alert-circle-check fsz-20"></i>
+            About
+        </button>
+    </div>
+
+     <div class="flex flex-start stack miwx-15 mawx-25 wvl-5" style="display: @(isSetting ? "block" : "none");">
+        <button class="bg-transparent bd-none bdl pd mgb-3" style="display: @(isGeneral ? "block" : "none");">
+            <i class="mdi mdi-tools fsz-20"></i>
+            General
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3" style="display: @(isAppearance ? "block" : "none");">
+            <i class=" mdi mdi-view-agenda-outline fsz-20"></i>
+            Appearance
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3" style="display: @(isLimit ? "block" : "none");">
+            <i class=" mdi mdi-console fsz-20"></i>
+            Limits & Constants
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3" style="display: @(isParameters ? "block" : "none");">
+            <i class=" mdi mdi-parachute-outline fsz-20"></i>
+            Default Parameters
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3" style="display: @(isStorage ? "block" : "none");">
+            <i class="mdi mdi-store-alert fsz-20"></i>
+            Date & Storage
+        </button>
+
+        <button class="bg-transparent bd-none bdl pd mgb-3" style="display: @(isAbout ? "block" : "none");">
+            <i class=" mdi mdi-alert-circle-check fsz-20"></i>
+            About
+        </button>
+    </div>
+
+    <div class="wf miwx-25 pd corner-2 shadow-border-1">
+        
+        <div style="display: @(isGeneral ? "block" : "none");">
+            <h3 class="fsz-15 mgb-10 cl-primary">General Settings</h3>
+            <div>
+                <div class="stack mgb-7">
+                    <label for="Language" class="fsz-12 mgb-2">Language</label>
+                    <select name="" id="" class="pd corner-1 bd">
+                        <option value="">English</option>
+                    </select>
+                </div>
+
+                <div class="stack mgb-7">
+                    <label for="Language" class="fsz-12 mgb-2">Default Theme</label>
+                    <div class="flex flex-start flow">
+                        <div class="bd bg-primary-01 pd flex flex-center mgr-3">
+                            <input type="radio" class="mgr-3">Light
+                        </div>
+                        <div class="bd bg-primary-01 pd flex flex-center mgr-3">
+                            <input type="radio" class="mgr-3">Dark
+                        </div>
+                        <div class="bd bg-primary-01 pd flex flex-center">
+                            <input type="radio" class="mgr-3">Systems
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stack mgb-7">
+                    <label for="Language" class="fsz-12 mgb-2">Animation Quality</label>
+                    <select name="" id="" class="pd corner-1 bd">
+                        <option value="">High</option>
+                    </select>
+                </div>
+
+                <div class="">
+                    <div class="flex flex-spacebetween mgb-5">
+                        <label for="Language" class="fsz-12 mgb-2">Show Tips on StartUp</label>
+                        <div class="bg-primary hx-02 wx-04 corner-3 pd-1 flex flex-end">
+                            <div class="bg-card round hf wx-02"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-spacebetween mgb-5">
+                        <label for="Language" class="fsz-12 mgb-2">Auto Save Results</label>
+                        <div class="bg-primary hx-02 wx-04 corner-3 pd-1 flex flex-end">
+                            <div class="bg-card round hf wx-02"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-spacebetween mgb-5">
+                        <label for="Language" class="fsz-12 mgb-2">Confirm before deleting</label>
+                        <div class="bg-primary hx-02 wx-04 corner-3 pd-1 flex flex-end">
+                            <div class="bg-card round hf wx-02"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private bool isSetting = false;
+    private bool isGeneral = true;
+    private bool isAppearance = false;
+    private bool isLimit =  false;
+    private bool isParameters =  false;
+    private bool isStorage =  false;
+    private bool isAbout =  false;
+
+    private void IsSetting()
+    {
+        isSetting = !isSetting;
+    }
+
+    private void IsGeneral()
+    {
+        isGeneral = true;
+        isAppearance = false;
+        isLimit = false;
+        isParameters = false;
+        isStorage = false;
+        isAbout = false;
+    }
+
+    private void IsAppearance()
+    {
+        isSetting = false;
+        isAppearance = true;
+        isLimit = false;
+        isParameters = false;
+        isStorage = false;
+        isAbout = false;
+    }
+
+    private void IsLimit()
+    {
+        isSetting = false;
+        isAppearance = false;
+        isLimit = true;
+        isParameters = false;
+        isStorage = false;
+        isAbout = false;
+    }
+
+    private void IsParameters()
+    {
+        isSetting = false;
+        isAppearance = false;
+        isLimit = false;
+        isParameters = true;
+        isStorage = false;
+        isAbout = false;
+    }
+
+    private void IsStorage()
+    {
+        isSetting = false;
+        isAppearance = false;
+        isLimit = false;
+        isParameters = false;
+        isStorage = true;
+        isAbout = false;
+    }
+
+    private void IsAbout()
+    {
+        isSetting = false;
+        isAppearance = false;
+        isLimit = false;
+        isParameters = false;
+        isStorage = false;
+        isAbout = true;
+    }
+}

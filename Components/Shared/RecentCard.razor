@@ -1,0 +1,18 @@
+<div class="flex flex-spacebetween flex-center">
+    <div class="corner-3 flex flex-center">
+
+        <img src="icons/cooking.svg" alt="" class="wx-05 hx-05 fsz-15">
+
+        <div class="text-center wf hx-05 pd">
+            <h3 class="mg-0 pdt fsz-15 text-left">@Title</h3>
+            <p class="mg-0 fsz-12 op-7 text-left">@SubTitle</p>
+        </div>
+    </div>
+
+    <i class="mdi mdi-arrow-right fsz-20"></i>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string SubTitle { get; set; } = "";
+}
