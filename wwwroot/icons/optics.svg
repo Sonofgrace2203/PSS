@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Optics">
+<title>Optics</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><path d="M36 12Q19 36 36 60Q53 36 36 12z" fill="#93c5fd" stroke="#2563eb" stroke-width="2.5"/><path d="M8 36h19m18 0h19" stroke="#123b70" stroke-width="2.5"/><path d="M47 22l14-7m-14 42 14 7" stroke="#f59e0b" stroke-width="2.5"/></g>
+</svg>

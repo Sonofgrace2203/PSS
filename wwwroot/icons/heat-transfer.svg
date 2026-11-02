@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Heat Transfer">
+<title>Heat Transfer</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><path d="M24 16a9 9 0 0 0-18 0v27a14 14 0 1 0 18 0z" transform="translate(12 0)" fill="none" stroke="#ef4444" stroke-width="3"/><path d="M30 24v24" stroke="#ef4444" stroke-width="5"/><path d="M45 24h17m-6-6 6 6-6 6M45 44h17m-6-6 6 6-6 6" fill="none" stroke="#2563eb" stroke-width="3"/></g>
+</svg>

@@ -1,0 +1,240 @@
+@page "/SimulationLibrary"
+@using System.Net.Http.Json
+@using pss.Components.Shared
+@using pss.Models.SimulationModuleDto
+@using pss.Models.CategoryOptionDto
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+@attribute [Authorize]
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="mgb-10">
+    <h2 class="mg-0 fsz-20 cl-primary">All Simulations</h2>
+    <p class="mg-0 fsz-13">Choose a physics topic to explore</p>
+</div>
+
+<div class="mgb-10">
+    <div class="row responsive miwx-3 mgb-3">
+        <div class="flex flex-start colm-25">
+            <div class="corner-2 flex flex-center wf">
+                <input type="text" placeholder="🔍 Search Simulations" class="corner-2 bd bg-card pd wf"
+                       @bind="searchText" @bind:event="oninput" />
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flow flex-start">
+        @foreach (var category in Categories)
+        {
+            <button @key="category"
+                    class="bd corner-2 pd mgr-1 mgb-1 block @(selectedCategory == category ? "bg-primary" : "bg-primary-01")"
+                    @onclick="() => SelectCategory(category)">
+                @category
+            </button>
+        }
+    </div>
+
+    <div class="mgt-2">
+        <button class="bd corner-2 pd bg-primary-01" @onclick="() => showFavouritesOnly = !showFavouritesOnly">
+            <i class="mdi @(showFavouritesOnly ? "mdi-star" : "mdi-star-outline")"></i>
+            @(showFavouritesOnly ? "Show all simulations" : "Favourites")
+        </button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="wf flex flex-center align-justify align-center" style="height:70vh">
+        <LoadingIndicator IsLoading="@isLoading" Message="Loading simulation library..."/>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(loadError))
+{
+    <div class="pd bd corner-2">
+        <p class="cl-fatal">@loadError</p>
+        <button class="bd corner-2 pd bg-primary-01" @onclick="LoadModulesAsync">
+            Try again
+        </button>
+    </div>
+}
+else if (!FilteredModules.Any())
+{
+    <div class="wf flex flex-center align-justify align-center" style="height:40vh">
+        <div class="text-center">
+            <h3 class="mg-0 fsz-13">No simulations found</h3>
+            <p class="fsz-12 op-7">
+                Try another search term or category.
+            </p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="scroll-y" style="height: 90vh;">
+        <div class="mgt mgb-5">
+            <div class="grid gap-1 colm-25">
+                @foreach (var module in FilteredModules)
+                {
+                    <LibraryCard @key="module.Id" ModuleId="@module.Id" Title="@module.Title" SubTitle="@module.Description"
+                                 ImageUrl="@module.ImageUrl" IsImplemented="@module.IsImplemented"
+                                 IsFavourite="@favouriteModuleIds.Contains(module.Id)" OnClick="@(() => OpenModule(module.Id))"
+                                 OnFavoriteClick="@(() => ToggleFavouriteAsync(module.Id))" />
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<SimulationModuleDto> modules = new();
+
+    private List<string> Categories = new() { "All" };
+
+    private readonly HashSet<Guid> favouriteModuleIds = new();
+
+    private string searchText = "";
+    private string selectedCategory = "All";
+    private bool showFavouritesOnly;
+    private bool isLoading = true;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadModulesAsync();
+    }
+
+    private async Task LoadModulesAsync()
+    {
+        isLoading = true;
+        loadError = null;
+
+        try
+        {
+            // Load modules from the existing API endpoint.
+            var result = await Http.GetFromJsonAsync<List<SimulationModuleDto>>(
+                "/api/modules/");
+
+            modules = result ?? new List<SimulationModuleDto>();
+
+            // Load category names from the database-backed category endpoint.
+            try
+            {
+                var categoryResult =
+                    await Http.GetFromJsonAsync<List<CategoryOptionDto>>(
+                        "/api/categories/");
+
+                Categories = new List<string> { "All" };
+
+                if (categoryResult is not null)
+                {
+                    Categories.AddRange(
+                        categoryResult
+                            .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                            .Select(c => c.Name)
+                            .Distinct(StringComparer.OrdinalIgnoreCase));
+                }
+            }
+            catch (HttpRequestException)
+            {
+                // Keep the library usable if only the category request fails.
+                Categories = new List<string> { "All" };
+
+                Categories.AddRange(
+                    modules
+                        .Select(m => m.Category)
+                        .Where(c => !string.IsNullOrWhiteSpace(c))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderBy(c => c));
+            }
+
+            // If the previously selected category no longer exists,
+            // return the user to All.
+            if (!Categories.Contains(
+                    selectedCategory,
+                    StringComparer.OrdinalIgnoreCase))
+            {
+                selectedCategory = "All";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            loadError =
+                "Could not connect to the PSS backend. Check that the API is running.";
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            loadError =
+                "The simulation library response could not be read.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private IEnumerable<SimulationModuleDto> FilteredModules
+    {
+        get
+        {
+            IEnumerable<SimulationModuleDto> query = modules;
+
+            if (selectedCategory != "All")
+            {
+                query = query.Where(m =>
+                    string.Equals(
+                        m.Category,
+                        selectedCategory,
+                        StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                var term = searchText.Trim();
+
+                query = query.Where(m =>
+                    m.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    m.Description.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    m.Category.Contains(term, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (showFavouritesOnly)
+            {
+                query = query.Where(m =>
+                    favouriteModuleIds.Contains(m.Id));
+            }
+
+            return query.OrderBy(m => m.DisplayOrder).ToList();
+        }
+    }
+
+    private void SelectCategory(string category)
+    {
+        selectedCategory = category;
+    }
+
+    private void OpenModule(Guid moduleId)
+    {
+        var module = modules.FirstOrDefault(m => m.Id == moduleId);
+
+        if (module is null || !module.IsImplemented)
+            return;
+
+        if (module.Slug != "projectile")
+            return;
+
+        Nav.NavigateTo($"/SimulationWorkSpace?moduleId={module.Id}");
+    }
+
+    private Task ToggleFavouriteAsync(Guid moduleId)
+    {
+        if (!favouriteModuleIds.Add(moduleId))
+        {
+            favouriteModuleIds.Remove(moduleId);
+        }
+
+        return Task.CompletedTask;
+    }
+}

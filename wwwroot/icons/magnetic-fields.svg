@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Magnetic Fields">
+<title>Magnetic Fields</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><path d="M20 48V25a16 16 0 0 1 32 0v23h-9V25a7 7 0 0 0-14 0v23z" fill="#ef4444" stroke="#123b70" stroke-width="2.5"/><path d="M12 18q-10 18 0 36M60 18q10 18 0 36" fill="none" stroke="#2563eb" stroke-width="2.5"/></g>
+</svg>

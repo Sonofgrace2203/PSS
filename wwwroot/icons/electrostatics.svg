@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Electrostatics">
+<title>Electrostatics</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><circle cx="22" cy="36" r="12" fill="#ef4444"/><circle cx="50" cy="36" r="12" fill="#3b82f6"/><path d="M22 30v12m-6-6h12M46 36h8M8 15q28-17 56 0M8 57q28 17 56 0" fill="none" stroke="#123b70" stroke-width="2.5"/></g>
+</svg>

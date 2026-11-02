@@ -1,0 +1,107 @@
+@using ApexCharts
+@using pss.Components.Shared
+@using System.Globalization
+
+<div class="wf">
+    <ApexChart TItem="ProjectileTrajectoryPoint" Title="@Title" Height="280" @ref="chart"
+               FormatYAxisLabel="@FormatYAxisLabel">
+
+        <ApexYAxis />
+
+        @if (GraphType == "position")
+        {
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Horizontal Position (m)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time" YValue="p => (decimal?)p.X" />
+
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Vertical Position (m)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time" YValue="p => (decimal?)p.Y" />
+        }
+        else if (GraphType == "velocity")
+        {
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Horizontal Velocity (m/s)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time" YValue="p => (decimal?)p.HorizontalVelocity" />
+
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Vertical Velocity (m/s)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time" YValue="p => (decimal?)p.VerticalVelocity" />
+
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Speed (m/s)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time" YValue="p => (decimal?)p.Speed" />
+        }
+        else if (GraphType == "energy")
+        {
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Kinetic Energy (J/kg)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time"
+                             YValue="p => (decimal?)(0.5 * p.Speed * p.Speed)" />
+
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Potential Energy (J/kg)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time" YValue="p => (decimal?)(Gravity * p.Y)" />
+
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Total Mechanical Energy (J/kg)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time"
+                             YValue="p => (decimal?)(0.5 * p.Speed * p.Speed + Gravity * p.Y)" />
+        }
+        else if (GraphType == "displacement")
+        {
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Horizontal Displacement (m)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time" YValue="p => (decimal?)p.X" />
+
+            <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Vertical Displacement (m)"
+                             SeriesType="SeriesType.Line" XValue="p => (decimal?)p.Time" YValue="p => (decimal?)p.Y" />
+        }
+    </ApexChart>
+
+    @if (Points.Count == 0)
+    {
+        <p class="fsz-12 op-6">
+            Run a simulation to display this graph.
+        </p>
+    }
+</div>
+
+
+@code {
+    [Parameter]
+    public List<ProjectileTrajectoryPoint> Points { get; set; } = new();
+
+    [Parameter]
+    public string Title { get; set; } = "Projectile Analysis";
+
+    [Parameter]
+    public string GraphType { get; set; } = "position";
+
+    [Parameter]
+    public double Gravity { get; set; } = 9.81;
+
+    private ApexChart<ProjectileTrajectoryPoint>? chart;
+
+    public async Task<string?> GetPngDataUriAsync()
+    {
+        if (chart is null || Points.Count == 0)
+            return null;
+
+        return await chart.GetDataUriAsync(
+            new DataUriOptions { Scale = 2 });
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (chart is not null)
+        {
+            await chart.UpdateSeriesAsync(animate: false);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && chart is not null)
+        {
+            await chart.UpdateSeriesAsync(animate: false);
+        }
+    }
+
+    private string FormatYAxisLabel(decimal value)
+    {
+        return value.ToString("F2", CultureInfo.InvariantCulture);
+    }
+}
+

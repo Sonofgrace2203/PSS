@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Diffraction and Polarisation">
+<title>Diffraction and Polarisation</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><path d="M18 16v40m8-40v40" stroke="#123b70" stroke-width="4"/><path d="M32 20l29-12v48L32 44z" fill="#f59e0b"/><path d="M32 24l29-4M32 32h29M32 40l29 4" stroke="#ef4444" stroke-width="2.5"/></g>
+</svg>

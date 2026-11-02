@@ -1,0 +1,21 @@
+@if (IsLoading)
+{
+    <div class="pss-inline-loader" role="status" aria-live="polite">
+        <div class="pss-spinner">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Message))
+        {
+            <p>@Message</p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsLoading { get; set; }
+
+    [Parameter] public string Message { get; set; } = "Loading...";
+}

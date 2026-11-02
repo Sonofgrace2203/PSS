@@ -1,0 +1,87 @@
+@page "/Demo"
+@using pss.Components.Shared
+@layout HomeMainLayout
+
+<div class="pss-landing">
+
+    <header class="landing-navbar">
+        <a href="/" class="landing-brand">
+            <img src="pss.png" alt="" class="brand-icon">
+            <span>Physics Simulation Studio</span>
+        </a>
+
+        <nav class="landing-nav-links">
+            <a href="/#features">Features</a>
+            <a href="/#how-it-works">How It Works</a>
+            <a href="/#about">About</a>
+        </nav>
+
+        <div class="landing-nav-actions">
+            <button type="button" class="landing-login" @onclick="ShowLogin">
+                Log In
+            </button>
+
+            <button type="button" class="landing-signup" @onclick="ShowSignUp">
+                Get Started
+            </button>
+        </div>
+    </header>
+
+    <div class="pd-5">
+
+        <div class="flex flex-spacebetween flow flex-center mgb-5">
+            <div class="mgb-3">
+                <h2 class="mg-0 fsz-20 cl-primary">Explore PSS Demos</h2>
+                <p class="fsz-12 op-7">
+                    Experiment with physics simulations without an account.
+                </p>
+            </div>
+
+            <div class="stack">
+                <label class="fsz-12 mgb-2 block">Choose a simulation</label>
+                <div>
+                    <select class="pd corner-2 bd" @bind="selectedModule">
+                        <option value="projectile">Projectile Motion</option>
+                        <option value="pendulum" disabled>Simple Pendulum — Coming soon</option>
+                        <option value="spring" disabled>Spring-Mass System — Coming soon</option>
+                        <option value="circular" disabled>Circular Motion — Coming soon</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        @switch (selectedModule)
+        {
+            case "projectile":
+                <ProjectileDemoWorkspace @key="selectedModule" />
+                break;
+
+            default:
+                <p class="fsz-13">Select an available demo.</p>
+                break;
+        }
+
+    </div>
+</div>
+
+<AuthModal IsOpen="@showAuthModal" IsOpenChanged="@((value) => showAuthModal = value)" IsLoginMode="@isLoginMode"
+           IsLoginModeChanged="@((value) => isLoginMode = value)" />
+
+@code {
+    private string selectedModule = "projectile";
+
+    private bool showAuthModal;
+    private bool isLoginMode = true;
+
+    private void ShowLogin()
+    {
+        isLoginMode = true;
+        showAuthModal = true;
+    }
+
+    private void ShowSignUp()
+    {
+        isLoginMode = false;
+        showAuthModal = true;
+    }
+}

@@ -1,0 +1,276 @@
+@using Microsoft.AspNetCore.Components
+@using pss.Models
+@using pss.Services
+@inject AuthService Auth
+
+@inject NavigationManager Nav
+
+@if (IsOpen)
+{
+    <div class="pss-auth-overlay" @onclick="Close">
+        <div class="pss-auth-container" @onclick:stopPropagation="true">
+
+            <div class="pss-auth-header">
+                <div>
+                    <h2>@(IsLoginMode
+                                                                                                                                                                                                                                                                                                                                                ? "Welcome back"
+                                                                                                                                                                                                                                                                                                                                                : "Create your account")</h2>
+
+                        <p>@(IsLoginMode
+                                                                                                                                                                                                                                                                                                                                                                                                    ? "Log in to continue to PSS."
+                                                                                                                                                                                                                                                                                                                                                                                                    : "Join PSS and explore physics simulations.")</p>
+                        </div>
+
+                        <button type="button" class="pss-auth-close setting-btn" aria-label="Close" @onclick="Close">
+                            &times;
+                        </button>
+                    </div>
+
+                    @if (IsLoginMode)
+                    {
+                        <div class="pss-auth-form">
+                            <label for="login-email">Email address</label>
+                            <input id="login-email" type="email" placeholder="Enter your email" autocomplete="email" @bind="Email" />
+                            
+                            <label for="login-password">Password</label>
+                            <div class="pss-password-wrapper">
+                                <input id="login-password" type="@(ShowPassword ? "text" : "password")"
+                                       placeholder="Enter your password" autocomplete="current-password" @bind="Password" />
+
+                                <button type="button"
+                                        class="pss-password-toggle fsz-20 mdi @(!ShowPassword ? "mdi-eye" : "mdi-eye-off")""
+                                        aria-label=" @(ShowPassword ? "Hide password" : "Show password")"
+                                        aria-pressed="@ShowPassword" @onclick="() => ShowPassword = !ShowPassword">
+                                </button>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                            {
+                                <p role="alert cl-error fsz-12">@ErrorMessage</p>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+                            {
+                                <p role="status cl-success fsz-12">@SuccessMessage</p>
+                            }
+
+                            <button type="button" class="pss-auth-submit" disabled="@IsSubmitting" @onclick="SubmitAsync">
+                                @(IsSubmitting ? "Logging in..." : "Login")
+                            </button>
+
+                            <p class="pss-auth-switch">
+                                Don't have an account?
+                                <button type="button" @onclick="ShowSignUp">
+                                    Sign up
+                                </button>
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="pss-auth-form">
+                            <label for="signup-name">Full name</label>
+                            <input id="signup-name" type="text" placeholder="Enter your full name" autocomplete="name"
+                                   @bind="FullName" />
+
+                            <label for="signup-email">Email address</label>
+                            <input id="signup-email" type="email" placeholder="Enter your email" autocomplete="email" @bind="Email" />
+
+                            <label for="signup-password">Password</label>
+                            <div class="pss-password-wrapper">
+                                <input id="signup-password" type="@(ShowPassword ? "text" : "password")" placeholder="Create a password"
+                                       autocomplete="new-password" @bind="Password" />
+
+                                <button type="button"
+                                        class="pss-password-toggle fsz-20 mdi @(!ShowPassword ? "mdi-eye" : "mdi-eye-off")"
+                                        aria-label="@(ShowPassword ? "Hide password" : "Show password")" aria-pressed="@ShowPassword"
+                                        @onclick="() => ShowPassword = !ShowPassword">
+                                </button>
+                            </div>
+
+                            <label for="signup-confirm-password">Confirm password</label>
+                            <div class="pss-password-wrapper">
+                                <input id="signup-confirm-password" type="@(ShowConfirmPassword ? "text" : "password")"
+                                       placeholder="Confirm your password" autocomplete="new-password" @bind="ConfirmPassword" />
+
+                                <button type="button"
+                                        class="pss-password-toggle fsz-20 mdi @(!ShowConfirmPassword ? "mdi-eye" : "mdi-eye-off")"
+                                        aria-label="@(ShowConfirmPassword ? "Hide confirm password" : "Show confirm password")"
+                                        aria-pressed="@ShowConfirmPassword" @onclick="() => ShowConfirmPassword = !ShowConfirmPassword">
+                                </button>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                            {
+                                <p role="cl-error fsz-12">@ErrorMessage</p>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+                            {
+                                <p role="cl-success fsz-12">@SuccessMessage</p>
+                            }
+
+                            <button type="button" class="pss-auth-submit" disabled="@IsSubmitting" @onclick="SubmitAsync">
+                                @(IsSubmitting ? "Creating account..." : "Sign up")
+                            </button>
+
+                            <p class="pss-auth-switch">
+                                Already have an account?
+                                <button type="button" @onclick="ShowLogin">
+                                    Login
+                                </button>
+                            </p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+@code {
+    
+    private string FullName = string.Empty;
+    private string Email = string.Empty;
+    private string Password = string.Empty;
+    private string ConfirmPassword = string.Empty;
+
+    private bool ShowPassword;
+    private bool ShowConfirmPassword;
+    private string ErrorMessage = string.Empty;
+    private string SuccessMessage = string.Empty;
+    private bool IsSubmitting;
+
+    [Parameter] public bool IsOpen { get; set; }
+
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    [Parameter] public bool IsLoginMode { get; set; } = true;
+
+    [Parameter] public EventCallback<bool> IsLoginModeChanged { get; set; }
+
+    private async Task Close()
+    {
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private async Task ShowLogin()
+    {
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+        Password = string.Empty;
+        ConfirmPassword = string.Empty;
+        ShowPassword = false;
+        ShowConfirmPassword = false;
+        await IsLoginModeChanged.InvokeAsync(true);
+    }
+
+    private async Task ShowSignUp()
+    {
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+        Password = string.Empty;
+        ConfirmPassword = string.Empty;
+        ShowPassword = false;
+        ShowConfirmPassword = false;
+        await IsLoginModeChanged.InvokeAsync(false);
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (IsSubmitting)
+            return;
+
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(Email) ||
+            string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage = "Email and password are required.";
+            return;
+        }
+
+        if (!IsLoginMode && string.IsNullOrWhiteSpace(FullName))
+        {
+            ErrorMessage = "Please enter your full name.";
+            return;
+        }
+
+        if (!IsLoginMode && string.IsNullOrWhiteSpace(ConfirmPassword))
+        {
+            ErrorMessage = "Please confirm your password.";
+            return;
+        }
+
+        if (!IsLoginMode && Password != ConfirmPassword)
+        {
+            ErrorMessage = "Passwords do not match.";
+            return;
+        }
+
+        IsSubmitting = true;
+
+        try
+        {
+            if (IsLoginMode)
+            {
+                var result = await Auth.LoginAsync(new LoginRequest
+                {
+                    Email = Email.Trim(),
+                    Password = Password
+                });
+
+                if (!result.Success)
+                {
+                    ErrorMessage = result.Message;
+                    return;
+                }
+
+                Password = string.Empty;
+                ConfirmPassword = string.Empty;
+                ShowPassword = false;
+                ShowConfirmPassword = false;
+
+                
+                await IsOpenChanged.InvokeAsync(false);
+
+                var currentUser = Auth.CurrentUser;
+
+                if (currentUser?.Roles?.Any(role =>
+                        string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) == true)
+                {
+                    Nav.NavigateTo("/AdminDashboard");
+                }
+                else
+                {
+                    Nav.NavigateTo("/Dashboard");
+                }
+
+            }
+            else
+            {
+                var result = await Auth.RegisterAsync(new RegisterRequest
+                {
+                    FullName = FullName.Trim(),
+                    Email = Email.Trim(),
+                    Password = Password
+                });
+
+                if (!result.Success)
+                {
+                    ErrorMessage = result.Message;
+                    return;
+                }
+
+                SuccessMessage = result.Message;
+                Password = string.Empty;
+                ConfirmPassword = string.Empty;
+                await IsLoginModeChanged.InvokeAsync(true);
+            }
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+}

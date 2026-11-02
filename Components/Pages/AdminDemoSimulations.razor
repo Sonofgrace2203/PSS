@@ -1,0 +1,922 @@
+@page "/DemoSimulations"
+@using pss.Components.Shared
+@using pss.Models.Dtos
+@using System.Net.Http.Json
+@using System.Globalization
+@using System.Text.Json
+@using Microsoft.AspNetCore.Authorization
+
+@inject HttpClient Http
+
+@attribute [Authorize(Roles = "Admin,SuperAdmin")]
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="flex flex-spacebetween flow">
+    <div class="mgb-10">
+        <h2 class="mg-0 fsz-20 cl-primary">Demo Simulations</h2>
+        <p class="mg-0 fsz-13">
+            View and manage anonymous simulation activity across PSS modules
+        </p>
+    </div>
+
+    <div>
+        <input type="text" placeholder="🔍 Search demo simulations" class="wx-3 pd corner-2 bd-none bd mgb-5"
+               value="@searchTerm" @oninput="HandleSearchChanged" />
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="wf flex flex-center align-justify align-center" style="height:70vh">
+        <LoadingIndicator IsLoading="@isLoading" Message="Loading demo simulations..."/>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="wf flex flex-center align-justify align-center" style="height:70vh">
+        <p class="mgt-5 cl-fatal fsz-12" role="alert">
+            @errorMessage
+        </p>
+
+        <button class="bd corner-2 pd bg-primary-01 fsz-10" @onclick="LoadDemoSimulationsAsync">
+            Retry
+        </button>
+    </div>
+}
+else
+{
+    @if (selectedSimulation is not null)
+    {
+        <div class="pd bd corner-2 mgt-5">
+            <div class="flex flex-spacebetween flex-center flow">
+                <h3 class="mg-0 fsz-16 cl-primary">
+                    Demo Simulation Details
+                </h3>
+
+                <button class="bd corner-2 pd bg-primary-01" @onclick="CloseDetails">
+                    Close
+                </button>
+            </div>
+
+            <p class="mgt-2">
+                <strong>Simulation ID:</strong>
+                @selectedSimulation.Id
+            </p>
+
+            <p>
+                <strong>Simulation:</strong>
+                @selectedSimulation.SimulationName
+            </p>
+
+            <p>
+                <strong>Module:</strong>
+                @selectedSimulation.ModuleName
+                <span class="fsz-12 op-6">
+                    (@selectedSimulation.ModuleId)
+                </span>
+            </p>
+
+            <p>
+                <strong>Recorded:</strong>
+                @FormatDate(selectedSimulation.CreatedAtUtc)
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                <span class="pd corner-2 fsz-11 bg-primary-01 cl-primary">
+                    @selectedSimulation.Status
+                </span>
+            </p>
+
+            <div class="mgt-25">
+                <h4 class="mg-0 fsz-15 cl-primary">
+                    Input Parameters
+                </h4>
+
+                <pre class="pd bd corner-2"
+                     style="white-space:pre-wrap; overflow-wrap:anywhere; overflow-x:auto;">@FormatJson(selectedSimulation.InputParameters)</pre>
+            </div>
+
+            <div class="mgt-25">
+                <h4 class="mg-0 fsz-15 cl-primary">
+                    Simulation Results
+                </h4>
+
+                <pre class="pd bd corner-2"
+                     style="white-space:pre-wrap; overflow-wrap:anywhere; overflow-x:auto;">@FormatJson(GetResultsWithoutTrajectory(selectedSimulation.Results))</pre>
+            </div>
+
+            @if (HasTrajectory(selectedSimulation.Results))
+            {
+                <div class="mgt-25">
+                    <h4 class="mg-0 fsz-15 cl-primary">
+                        Trajectory Data
+                    </h4>
+
+                    <p class="fsz-13 op-6">
+                        @GetTrajectoryCount(selectedSimulation.Results) trajectory points recorded.
+                    </p>
+
+                    <details class="pd bd corner-2">
+                        <summary style="cursor:pointer;">
+                            View full trajectory data
+                        </summary>
+
+                        <pre class="mgt-5"
+                             style="white-space:pre-wrap; overflow-wrap:anywhere; overflow-x:auto;">@FormatJson(GetTrajectory(selectedSimulation.Results))</pre>
+                    </details>
+                </div>
+            }
+        </div>
+    }
+
+    @if (simulationPendingDelete.HasValue)
+    {
+        <ConfirmDialog TitleStart="Delete demo simulation?" TitleAction="1"
+                       SubTitle="This permanently deletes the selected anonymous demo simulation record. This action cannot be undone."
+                       CancelButtonAble="@isDeleting" OnCancel="CancelDelete" ConfirmButtonAble="@isDeleting"
+                       OnConfirm="ConfirmDeleteAsync" ConfirmButtonProcess="@(isDeleting ? "Deleting..." : "Yes, delete")" />
+    }
+
+    @if (showBulkDeleteConfirmation)
+    {
+        <ConfirmDialog TitleStart="Delete" TitleAction="@selectedSimulationIds.Count" TitleEnd="selected demo simulations"
+                       SubTitle="This permanently deletes the selected anonymous demo records. This action cannot be undone."
+                       CancelButtonAble="@isDeleting" OnCancel="CancelBulkDelete" ConfirmButtonAble="@isDeleting"
+                       OnConfirm="ConfirmBulkDeleteAsync"
+                       ConfirmButtonProcess="@(isDeleting ? "Deleting..." : "Yes, delete all selected")" />
+    }
+
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <p class="fsz-12 cl-primary" role="status">
+            @successMessage
+        </p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(actionErrorMessage))
+    {
+        <p class="fsz-12 cl-fatal" role="alert">
+            @actionErrorMessage
+        </p>
+    }
+
+    <div class="wf mgt">
+        @* <div class="flex flex-spacebetween flex-center flow mgb-5">
+            <div class="flex flex-center flow">
+                <label class="fsz-12">
+                    Module
+                    <select class="pd corner-2 bd mgb-5" value="@moduleFilter" @onchange="HandleModuleChanged">
+                        <option value="">All modules</option>
+
+                        @foreach (var module in AvailableModules)
+                        {
+                            <option value="@module.Id">
+                                @module.ModuleName
+                            </option>
+                        }
+                    </select>
+                </label>
+
+                <label class="fsz-12">
+                    Status
+                    <select class="pd corner-2 bd mgb-5" value="@statusFilter" @onchange="HandleStatusChanged">
+                        <option value="">All statuses</option>
+
+                        @foreach (var status in AvailableStatuses)
+                        {
+                            <option value="@status">
+                                @status
+                            </option>
+                        }
+                    </select>
+                </label>
+            </div>
+
+            <button class="bd corner-2 pd bg-primary-01 fsz-10" disabled="@isDeleting" @onclick="LoadDemoSimulationsAsync">
+                Refresh
+            </button>
+        </div> *@
+
+        @if (selectedSimulationIds.Count > 0)
+        {
+            <div class="flex flex-spacebetween flex-center flow mgb-5">
+                <label class="flex flex-center mgb-3" style="gap:8px;">
+                    <input type="checkbox" checked="@AreAllVisibleSelected" disabled="@isDeleting"
+                           @onchange="ToggleSelectAll" />
+                    Select all visible
+                </label>
+
+                <div>
+                    <button class="bd corner-2 pd" style="background-color:#b42318; color:white;" disabled="@isDeleting"
+                            @onclick="RequestBulkDelete">
+                        Delete selected (@selectedSimulationIds.Count)
+                    </button>
+
+                    <button class="bd corner-2 pd bg-primary-01" disabled="@isDeleting" @onclick="CancelBulkDelete">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        }
+
+        <div class="scroll-y" style="height:90vh;">
+            <div style="overflow-x:auto; max-width:100%;" class="bd corner-2">
+
+                <table style="width:100%; border-collapse:collapse; min-width:950px;">
+                    <thead>
+                        <tr class="bg-primary-01">
+                            <th class="cl-primary text-left" style="padding:12px;">
+                                Select
+                            </th>
+                            <th class="cl-primary text-left" style="padding:12px;">
+                                Image
+                            </th>
+                            <th class="cl-primary text-left" style="padding:12px;">
+                                Simulation
+                            </th>
+                            <th class="cl-primary text-left" style="padding:12px;">
+                                Status
+                            </th>
+                            <th class="cl-primary text-left" style="padding:12px;">
+                                Recorded
+                            </th>
+                            <th class="cl-primary text-left" style="padding:12px;">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (FilteredSimulations.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="pd text-center fsz-12" style="height:30vh;">
+                                    No demo simulations found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var simulation in PagedSimulations)
+                            {
+                                <tr @key="simulation.Id" style="border-top:1px solid #8884;">
+
+                                    <td style="padding:12px;">
+                                        <input type="checkbox" checked="@selectedSimulationIds.Contains(simulation.Id)"
+                                               disabled="@isDeleting" @onchange="(e) => ToggleSimulationSelection(
+                                                   simulation.Id,
+                                                   e.Value is bool selected && selected)" />
+</td>
+
+                                    <td style="padding:12px;">
+                                        @if (!string.IsNullOrWhiteSpace(GetModuleImage(simulation.ModuleId)))
+                                        {
+                                            <img src="@GetModuleImage(simulation.ModuleId)" alt="@simulation.ModuleName"
+                                                 class="wx-04 hx-04" style="object-fit:cover; border-radius:8px;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="fsz-12 op-6">No image</span>
+                                        }
+                                    </td>
+
+                                    <td style="padding:12px;">
+                                        <strong>
+                                            @(string.IsNullOrWhiteSpace(simulation.SimulationName)
+                                                ? "Unnamed Simulation"
+                                                : simulation.SimulationName)
+                                        </strong>
+                                        <p class="mg-0 fsz-13 op-6">
+                                            @simulation.ModuleName (@simulation.ModuleId)
+                                        </p>
+                                        <p class="mg-0 fsz-11 op-6">
+                                            ID: @simulation.Id
+                                        </p>
+                                    </td>
+
+                                    <td style="padding:12px;">
+                                        <span class="pd corner-2 fsz-11 bg-primary-01 cl-primary">
+                                            @simulation.Status
+                                        </span>
+                                    </td>
+
+                                    <td style="padding:12px;">
+                                        @FormatDate(simulation.CreatedAtUtc)
+                                    </td>
+
+                                    <td style="padding:12px;">
+                                        <button class="bd-none bg-transparent mgr-3" title="View demo simulation details"
+                                                aria-label="View demo simulation details" style="cursor:pointer;"
+                                                disabled="@isOpeningDetails" @onclick="() => OpenDetailsAsync(simulation.Id)">
+                                            <i class="mdi mdi-eye fsz-20 cl-secondary"></i>
+                                        </button>
+
+                                        <button class="bd-none bg-transparent" title="Delete demo simulation"
+                                                aria-label="Delete demo simulation" style="cursor:pointer;" disabled="@isDeleting"
+                                                @onclick="() => RequestDelete(simulation.Id)">
+                                            <i class="mdi mdi-delete fsz-20 cl-fatal"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <Pagination CurrentPage="@CurrentPage" TotalPages="@TotalPages" TotalItems="@FilteredSimulations.Count"
+                    PageSize="@PageSize" ItemLabel="demo simulation" CurrentPageChanged="HandlePageChanged"
+                    PageSizeChanged="HandlePageSizeChanged" />
+    </div>
+}
+
+@code {
+    private List<DemoSimulationRow> demoSimulations = new();
+    private List<DashboardModuleDto> modules = new();
+
+    private DemoSimulationDetails? selectedSimulation;
+    private Guid? simulationPendingDelete;
+    private HashSet<Guid> selectedSimulationIds = new();
+
+    private string searchTerm = string.Empty;
+    private string moduleFilter = string.Empty;
+    private string statusFilter = string.Empty;
+
+    private string? errorMessage;
+    private string? actionErrorMessage;
+    private string? successMessage;
+
+    private bool isLoading = true;
+    private bool isOpeningDetails;
+    private bool isDeleting;
+    private bool showBulkDeleteConfirmation;
+    private bool confirmBeforeDeleting = true;
+    private bool isLoadingGeneralSettings;
+
+    private int CurrentPage = 1;
+    private int PageSize = 10;
+
+    private int TotalPages =>
+        Math.Max(1, (int)Math.Ceiling(
+            FilteredSimulations.Count / (double)PageSize));
+
+    private IEnumerable<DemoSimulationRow> AvailableModules =>
+        demoSimulations
+            .GroupBy(
+                record => record.ModuleId,
+                StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .OrderBy(record => record.ModuleName);
+
+    private IEnumerable<string> AvailableStatuses =>
+        demoSimulations
+            .Select(record => record.Status)
+            .Where(status => !string.IsNullOrWhiteSpace(status))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(status => status);
+
+    private List<DemoSimulationRow> FilteredSimulations =>
+        demoSimulations
+            .Where(simulation =>
+                string.IsNullOrWhiteSpace(searchTerm)
+                || simulation.SimulationName.Contains(
+                    searchTerm.Trim(),
+                    StringComparison.OrdinalIgnoreCase)
+                || simulation.ModuleName.Contains(
+                    searchTerm.Trim(),
+                    StringComparison.OrdinalIgnoreCase)
+                || simulation.ModuleId.Contains(
+                    searchTerm.Trim(),
+                    StringComparison.OrdinalIgnoreCase)
+                || simulation.Id.ToString().Contains(
+                    searchTerm.Trim(),
+                    StringComparison.OrdinalIgnoreCase)
+                || simulation.Status.Contains(
+                    searchTerm.Trim(),
+                    StringComparison.OrdinalIgnoreCase)
+                || FormatDate(simulation.CreatedAtUtc).Contains(
+                    searchTerm.Trim(),
+                    StringComparison.OrdinalIgnoreCase))
+            .Where(simulation =>
+                string.IsNullOrWhiteSpace(moduleFilter)
+                || string.Equals(
+                    simulation.ModuleId,
+                    moduleFilter,
+                    StringComparison.OrdinalIgnoreCase))
+            .Where(simulation =>
+                string.IsNullOrWhiteSpace(statusFilter)
+                || string.Equals(
+                    simulation.Status,
+                    statusFilter,
+                    StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(simulation => simulation.CreatedAtUtc)
+            .ToList();
+
+    private List<DemoSimulationRow> PagedSimulations =>
+        FilteredSimulations
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+
+    private bool AreAllVisibleSelected =>
+        PagedSimulations.Count > 0 &&
+        PagedSimulations.All(
+            simulation => selectedSimulationIds.Contains(simulation.Id));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGeneralSettingsAsync();
+        await LoadDemoSimulationsAsync();
+    }
+
+    private async Task LoadDemoSimulationsAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        actionErrorMessage = null;
+
+        try
+        {
+            // The admin list endpoint returns metadata only, not large JSON payloads.
+            var firstPage =
+                await Http.GetFromJsonAsync<DemoSimulationListResponse>(
+                    "/api/admin/demo-simulations/?page=1&pageSize=100");
+
+            var allRecords = firstPage?.Records ?? new List<DemoSimulationRow>();
+            var totalPages = firstPage?.TotalPages ?? 0;
+
+            // Load subsequent metadata pages so local search, filters and pagination
+            // cover the complete list of recorded demo simulations.
+            for (var page = 2; page <= totalPages; page++)
+            {
+                var nextPage =
+                    await Http.GetFromJsonAsync<DemoSimulationListResponse>(
+                        $"/api/admin/demo-simulations/?page={page}&pageSize=100");
+
+                if (nextPage?.Records is not null)
+                {
+                    allRecords.AddRange(nextPage.Records);
+                }
+            }
+
+            demoSimulations = allRecords;
+
+            // Module images are optional; the page still works if this request fails.
+            try
+            {
+                modules = await Http.GetFromJsonAsync<List<DashboardModuleDto>>(
+                    "/api/modules/") ?? new();
+            }
+            catch (HttpRequestException)
+            {
+                modules = new();
+            }
+            catch (JsonException)
+            {
+                modules = new();
+            }
+
+            selectedSimulationIds.RemoveWhere(
+                id => !demoSimulations.Any(record => record.Id == id));
+
+            CurrentPage = Math.Min(CurrentPage, TotalPages);
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage =
+                "Could not load demo simulations. Check the backend connection and your admin permissions.";
+        }
+        catch (JsonException)
+        {
+            errorMessage =
+                "The demo simulation list returned an unexpected response format.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadGeneralSettingsAsync()
+    {
+        isLoadingGeneralSettings = true;
+
+        try
+        {
+            var settings = await Http.GetFromJsonAsync<GeneralSettingsResponse>(
+                "/api/settings/general/");
+
+            if (settings is not null)
+            {
+                confirmBeforeDeleting = settings.ConfirmBeforeDeleting;
+            }
+        }
+        catch (HttpRequestException)
+        {
+            // Retain the safe default: require confirmation.
+            confirmBeforeDeleting = true;
+        }
+        catch (JsonException)
+        {
+            confirmBeforeDeleting = true;
+        }
+        finally
+        {
+            isLoadingGeneralSettings = false;
+        }
+    }
+
+    private async Task OpenDetailsAsync(Guid simulationId)
+    {
+        if (isOpeningDetails)
+            return;
+
+        isOpeningDetails = true;
+        actionErrorMessage = null;
+
+        try
+        {
+            selectedSimulation =
+                await Http.GetFromJsonAsync<DemoSimulationDetails>(
+                    $"/api/admin/demo-simulations/{simulationId}");
+
+            if (selectedSimulation is null)
+            {
+                actionErrorMessage =
+                    "The selected demo simulation was not found.";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            actionErrorMessage =
+                "Could not retrieve the selected demo simulation.";
+        }
+        catch (JsonException)
+        {
+            actionErrorMessage =
+                "The demo simulation details could not be read.";
+        }
+        finally
+        {
+            isOpeningDetails = false;
+        }
+    }
+
+    private string GetModuleImage(string? moduleId)
+    {
+        if (string.IsNullOrWhiteSpace(moduleId))
+            return string.Empty;
+
+        var module = modules.FirstOrDefault(item =>
+            string.Equals(
+                item.Slug,
+                moduleId,
+                StringComparison.OrdinalIgnoreCase));
+
+        return module?.ImageUrl ?? string.Empty;
+    }
+
+    private static string FormatDate(DateTime createdAtUtc) =>
+        createdAtUtc.ToLocalTime().ToString(
+            "dd MMM yyyy, hh:mm tt",
+            CultureInfo.InvariantCulture);
+
+    private static string FormatJson(JsonElement value) =>
+        value.ValueKind == JsonValueKind.Undefined
+            ? "No data available."
+            : JsonSerializer.Serialize(
+                value,
+                new JsonSerializerOptions { WriteIndented = true });
+
+    private static JsonElement GetResultsWithoutTrajectory(JsonElement results)
+    {
+        if (results.ValueKind != JsonValueKind.Object ||
+            !results.TryGetProperty("trajectory", out _))
+        {
+            return results;
+        }
+
+        var summary = new Dictionary<string, JsonElement>();
+
+        foreach (var property in results.EnumerateObject())
+        {
+            if (!string.Equals(
+                    property.Name,
+                    "trajectory",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                summary[property.Name] = property.Value;
+            }
+        }
+
+        using var document = JsonDocument.Parse(
+            JsonSerializer.Serialize(summary));
+
+        return document.RootElement.Clone();
+    }
+
+    private static bool HasTrajectory(JsonElement results) =>
+        results.ValueKind == JsonValueKind.Object &&
+        results.TryGetProperty("trajectory", out var trajectory) &&
+        trajectory.ValueKind == JsonValueKind.Array;
+
+    private static JsonElement GetTrajectory(JsonElement results)
+    {
+        if (results.ValueKind == JsonValueKind.Object &&
+            results.TryGetProperty("trajectory", out var trajectory))
+        {
+            return trajectory;
+        }
+
+        return default;
+    }
+
+    private static int GetTrajectoryCount(JsonElement results)
+    {
+        if (results.ValueKind == JsonValueKind.Object &&
+            results.TryGetProperty("trajectory", out var trajectory) &&
+            trajectory.ValueKind == JsonValueKind.Array)
+        {
+            return trajectory.GetArrayLength();
+        }
+
+        return 0;
+    }
+
+    private void HandleSearchChanged(ChangeEventArgs args)
+    {
+        searchTerm = args.Value?.ToString() ?? string.Empty;
+        CurrentPage = 1;
+    }
+
+    private void HandleModuleChanged(ChangeEventArgs args)
+    {
+        moduleFilter = args.Value?.ToString() ?? string.Empty;
+        CurrentPage = 1;
+    }
+
+    private void HandleStatusChanged(ChangeEventArgs args)
+    {
+        statusFilter = args.Value?.ToString() ?? string.Empty;
+        CurrentPage = 1;
+    }
+
+    private Task HandlePageChanged(int page)
+    {
+        CurrentPage = page;
+        return Task.CompletedTask;
+    }
+
+    private Task HandlePageSizeChanged(int pageSize)
+    {
+        PageSize = pageSize;
+        CurrentPage = 1;
+        return Task.CompletedTask;
+    }
+
+    private void CloseDetails()
+    {
+        selectedSimulation = null;
+    }
+
+    private async Task RequestDelete(Guid simulationId)
+    {
+        if (isDeleting || isLoadingGeneralSettings)
+            return;
+
+        actionErrorMessage = null;
+        successMessage = null;
+        showBulkDeleteConfirmation = false;
+
+        if (confirmBeforeDeleting)
+        {
+            simulationPendingDelete = simulationId;
+            return;
+        }
+
+        simulationPendingDelete = null;
+        await DeleteDemoSimulationAsync(simulationId);
+    }
+
+    private void CancelDelete()
+    {
+        if (!isDeleting)
+            simulationPendingDelete = null;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (!simulationPendingDelete.HasValue || isDeleting)
+            return;
+
+        var simulationId = simulationPendingDelete.Value;
+
+        await DeleteDemoSimulationAsync(simulationId);
+    }
+
+    private async Task DeleteDemoSimulationAsync(Guid simulationId)
+    {
+        if (isDeleting)
+            return;
+    
+        isDeleting = true;
+        actionErrorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            using var response = await Http.DeleteAsync(
+                $"/api/admin/demo-simulations/{simulationId}");
+
+            if (response.IsSuccessStatusCode ||
+                response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                demoSimulations.RemoveAll(
+                    record => record.Id == simulationId);
+
+                selectedSimulationIds.Remove(simulationId);
+
+                if (selectedSimulation?.Id == simulationId)
+                    selectedSimulation = null;
+
+                simulationPendingDelete = null;
+                CurrentPage = Math.Min(CurrentPage, TotalPages);
+                successMessage = "Demo simulation deleted.";
+            }
+            else
+            {
+                actionErrorMessage =
+                    $"Could not delete the demo simulation (HTTP {(int)response.StatusCode}).";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            actionErrorMessage =
+                "Could not connect to the backend. The deletion was not confirmed.";
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    private void ToggleSimulationSelection(Guid simulationId, bool isSelected)
+    {
+        if (isSelected)
+            selectedSimulationIds.Add(simulationId);
+        else
+            selectedSimulationIds.Remove(simulationId);
+    }
+
+    private void ToggleSelectAll(ChangeEventArgs args)
+    {
+        var selectAll = args.Value is bool value && value;
+
+        foreach (var simulation in PagedSimulations)
+        {
+            if (selectAll)
+                selectedSimulationIds.Add(simulation.Id);
+            else
+                selectedSimulationIds.Remove(simulation.Id);
+        }
+    }
+
+    private async Task RequestBulkDelete()
+    {
+        if (selectedSimulationIds.Count == 0 ||
+            isDeleting ||
+            isLoadingGeneralSettings)
+            return;
+
+        actionErrorMessage = null;
+        successMessage = null;
+        simulationPendingDelete = null;
+
+        if (confirmBeforeDeleting)
+        {
+            showBulkDeleteConfirmation = true;
+            return;
+        }
+
+        await ConfirmBulkDeleteAsync();
+    }
+
+    private async Task ConfirmBulkDeleteAsync()
+    {
+        if (selectedSimulationIds.Count == 0 || isDeleting)
+            return;
+
+        isDeleting = true;
+        actionErrorMessage = null;
+        successMessage = null;
+
+        var idsToDelete = selectedSimulationIds.ToList();
+        var failedIds = new List<Guid>();
+        var deletedCount = 0;
+
+        try
+        {
+            foreach (var id in idsToDelete)
+            {
+                try
+                {
+                    using var response = await Http.DeleteAsync(
+                        $"/api/admin/demo-simulations/{id}");
+
+                    if (response.IsSuccessStatusCode ||
+                        response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        demoSimulations.RemoveAll(record => record.Id == id);
+                        selectedSimulationIds.Remove(id);
+
+                        if (selectedSimulation?.Id == id)
+                            selectedSimulation = null;
+
+                        deletedCount++;
+                    }
+                    else
+                    {
+                        failedIds.Add(id);
+                    }
+                }
+                catch (HttpRequestException)
+                {
+                    failedIds.Add(id);
+                }
+            }
+
+            showBulkDeleteConfirmation = false;
+            CurrentPage = Math.Min(CurrentPage, TotalPages);
+
+            if (failedIds.Count > 0)
+            {
+                actionErrorMessage =
+                    $"Could not delete {failedIds.Count} demo simulation(s). " +
+                    "The remaining selections have been kept so you can retry.";
+            }
+
+            if (deletedCount > 0)
+            {
+                successMessage =
+                    $"Deleted {deletedCount} demo simulation(s).";
+            }
+
+            if (failedIds.Count == 0)
+                selectedSimulationIds.Clear();
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    private void CancelBulkDelete()
+    {
+        if (isDeleting)
+            return;
+
+        showBulkDeleteConfirmation = false;
+        selectedSimulationIds.Clear();
+    }
+
+    private sealed class DemoSimulationListResponse
+    {
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalRecords { get; set; }
+        public int TotalPages { get; set; }
+        public List<DemoSimulationRow> Records { get; set; } = new();
+    }
+
+    private sealed class DemoSimulationRow
+    {
+        public Guid Id { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public string ModuleId { get; set; } = string.Empty;
+        public string ModuleName { get; set; } = string.Empty;
+        public string SimulationName { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+
+    private sealed class DemoSimulationDetails
+    {
+        public Guid Id { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public string ModuleId { get; set; } = string.Empty;
+        public string ModuleName { get; set; } = string.Empty;
+        public string SimulationName { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public JsonElement InputParameters { get; set; }
+        public JsonElement Results { get; set; }
+    }
+
+    private sealed class GeneralSettingsResponse
+    {
+        public bool ShowTipsOnStartup { get; set; }
+        public bool AutoSaveResults { get; set; }
+        public bool ConfirmBeforeDeleting { get; set; }
+    }
+}

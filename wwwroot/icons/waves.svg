@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Waves">
+<title>Waves</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><path d="M7 36c7 0 7-20 14-20s7 40 14 40 7-40 14-40 7 20 14 20" fill="none" stroke="#2563eb" stroke-width="3.5"/><path d="M7 57h56" stroke="#123b70" stroke-width="2.5"/></g>
+</svg>

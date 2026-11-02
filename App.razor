@@ -1,0 +1,41 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using pss.Components.Shared
+
+@layout HomeMainLayout
+
+<Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Components.Pages.NotFound)">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+            
+            <NotAuthorized>
+                <LayoutView Layout="@typeof(HomeMainLayout)">
+                    <div class="flex flex-center align-center wf" style="height: 100vh;">
+                        <div class="stack">
+                            <h2 class="cl-primary mg-0">Sign in required</h2>
+                            <p class="pd-2 mg-0">Please sign in to access this page.</p>
+
+                            <button type="button" class="pd bg-primary-01 corner-2 bd-none" @onclick="OpenAuthModal">
+                                Sign in
+                            </button>
+                        </div>
+                    </div>
+                </LayoutView>
+
+                <AuthModal @bind-IsOpen="IsAuthModalOpen" @bind-IsLoginMode="IsAuthLoginMode" />
+            </NotAuthorized>
+
+        </AuthorizeRouteView>
+
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+</Router>
+
+@code {
+    private bool IsAuthModalOpen;
+    private bool IsAuthLoginMode = true;
+
+    private void OpenAuthModal()
+    {
+        IsAuthModalOpen = true;
+    }
+}

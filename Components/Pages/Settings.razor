@@ -1,0 +1,895 @@
+@page "/Settings"
+@using pss.Components.Shared
+@using System.Net.Http.Json
+@using System.Net.Http
+@using pss.Models.Settings
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient Http
+
+@attribute [Authorize]
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="flex flex-spacebetween flow">
+    <div class="mgb-10 cl-primary">
+        <h2 class="mg-0 fsz-20">Settings</h2>
+        <p class="mg-0 fsz-13">Customize your experience</p>
+    </div>
+
+    <button class="mdi mdi-tools fsz-25 round wx-05 hx-05 pd-1 bd-none bg-secondary-01 cl-secondary"
+            style="cursor: pointer;" @onclick="IsSetting"></button>
+</div>
+
+<div class="row responsive colm-3">
+    <div class="flex flex-start stack miwx-15 mawx-25 mgb-5" style="display: @(!isSetting ? "block" : "none");">
+        <button class="bg-transparent bd-none bdl pd mgb-3 block setting-btn" @onclick="IsGeneral">
+            <i class="mdi mdi-tools fsz-20"></i>
+            General
+        </button>
+
+        @* <button class="bg-transparent bd-none bdl pd mgb-3 block setting-btn" @onclick="IsAppearance">
+            <i class=" mdi mdi-view-agenda-outline fsz-20"></i>
+            Appearance
+        </button> *@
+
+        <button class="bg-transparent bd-none bdl pd mgb-3 block setting-btn" @onclick="IsLimit">
+            <i class=" mdi mdi-console fsz-20"></i>
+            Limits & Constants
+        </button>
+
+        @* <button class="bg-transparent bd-none bdl pd mgb-3 block setting-btn" @onclick="IsParameters">
+            <i class=" mdi mdi-parachute-outline fsz-20"></i>
+            Default Parameters
+        </button> *@
+
+        @* <button class="bg-transparent bd-none bdl pd mgb-3 block setting-btn" @onclick="IsStorage">
+            <i class="mdi mdi-store-alert fsz-20"></i>
+            Date & Storage
+        </button> *@
+
+        <button class="bg-transparent bd-none bdl pd mgb-3 block setting-btn" @onclick="IsAbout">
+            <i class=" mdi mdi-alert-circle-check fsz-20"></i>
+            About
+        </button>
+    </div>
+
+    <div class="wf miwx-25 pd corner-2 shadow-border-1">
+
+        <div style="display: @(isGeneral ? "block" : "none");">
+            <h3 class="fsz-15 mgb-5 cl-primary">General Settings</h3>
+            @if (isLoadingGeneralSettings)
+            {
+                <p class="fsz-12 op-6">Loading general settings...</p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(generalSettingsError))
+            {
+                <p class="fsz-12 cl-fatal mgb-10" role="alert">@generalSettingsError</p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(generalSettingsMessage))
+            {
+                <p class="fsz-12 cl-success mgb-10" role="status">@generalSettingsMessage</p>
+            }
+
+            <div>
+                @* <div class="stack mgb-7">
+                    <label for="Language" class="fsz-12 mgb-2">Language</label>
+                    <select name="" id="" class="pd corner-1 bd">
+                        <option value="">English</option>
+                    </select>
+                </div>
+
+                <div class="stack mgb-7">
+                    <label for="Language" class="fsz-12 mgb-2">Default Theme</label>
+                    <div class="flex flex-start flow">
+                        <div class="bd bg-primary-01 pd flex flex-center mgr-3">
+                            <input type="radio" class="mgr-3">Light
+                        </div>
+                        <div class="bd bg-primary-01 pd flex flex-center mgr-3">
+                            <input type="radio" class="mgr-3">Dark
+                        </div>
+                        <div class="bd bg-primary-01 pd flex flex-center">
+                            <input type="radio" class="mgr-3">Systems
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stack mgb-7">
+                    <label for="Language" class="fsz-12 mgb-2">Animation Quality</label>
+                    <select name="" id="" class="pd corner-1 bd">
+                        <option value="">High</option>
+                    </select>
+                </div> *@
+
+                <div class="mgt-5">
+                    <div class="flex flex-spacebetween mgb-5">
+                        <label for="Language" class="fsz-12 mgb-2">Show Tips on StartUp</label>
+                        <div class="bg-primary hx-02 wx-04 corner-3 pd-1 flex @(showTipsOnStartup ? "flex-end" : "flex-start")"
+                             role="switch" aria-checked="@showTipsOnStartup" style="cursor: pointer;"
+                             @onclick="() => UpdateGeneralSettingAsync(nameof(showTipsOnStartup), !showTipsOnStartup)">
+                            <div class="bg-card round hf wx-02"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-spacebetween mgb-5">
+                        <label for="Language" class="fsz-12 mgb-2">Auto Save Results</label>
+                        <div class="bg-primary hx-02 wx-04 corner-3 pd-1 flex @(autoSaveResults ? "flex-end" : "flex-start")"
+                             role="switch" aria-checked="@autoSaveResults" style="cursor: pointer;"
+                             @onclick="() => UpdateGeneralSettingAsync(nameof(autoSaveResults), !autoSaveResults)">
+                            <div class="bg-card round hf wx-02"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-spacebetween mgb-5">
+                        <label for="Language" class="fsz-12 mgb-2">Confirm before deleting</label>
+                        <div class="bg-primary hx-02 wx-04 corner-3 pd-1 flex @(confirmBeforeDeleting ? "flex-end" : "flex-start")"
+                             role="switch" aria-checked="@confirmBeforeDeleting" style="cursor: pointer;"
+                             @onclick="() => UpdateGeneralSettingAsync(nameof(confirmBeforeDeleting), !confirmBeforeDeleting)">
+                            <div class="bg-card round hf wx-02"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* APPEARANCE TAB *@
+        @* <div class="settings-tab-content" id="appearanceTab" style="display: @(isAppearance ? "block" : "none");">
+            <div class="mgb-20">
+                <h3 class="fsz-15 mgb-2 cl-primary">Appearance</h3>
+                <p class="text-muted fsz-12">
+                    Customize how Physics Simulation Studio looks and feels.
+                </p>
+            </div>
+
+            <div class="mgb-10">
+                <div class="flex flex-spacebetween">
+                    <div>
+                        <h4 class="mg-0 fsz-13 pdb-2">Theme</h4>
+                        <p class="text-muted fsz-12 mg-0">
+                            Choose your preferred application appearance.
+                        </p>
+                    </div>
+                    <select class="pd corner-2 bd fsz-12" id="appearanceTheme">
+                        <option value="system">System Default</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mgb-10">
+                <div class="flex flex-spacebetween">
+                    <div>
+                        <h4 class="mg-0 fsz-13 pdb-2">Animation Quality</h4>
+                        <p class="text-muted fsz-12 mg-0">
+                            Control the visual quality of simulation animations.
+                        </p>
+                    </div>
+                    <select class="pd corner-2 bd fsz-12" id="animationQuality">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mgb-10">
+                <div class="flex flex-spacebetween">
+                    <div>
+                        <h4 class="mg-0 fsz-13 pdb-2">Reduced Motion</h4>
+                        <p class="text-muted fsz-12 mg-0">
+                            Reduce interface animations and motion effects.
+                        </p>
+                    </div>
+                    <input type="checkbox" id="reducedMotion" />
+                </div>
+            </div>
+        </div> *@
+
+        @* LIMITS & CONSTANTS TAB *@
+        <div class="settings-tab-content" id="limitsConstantsTab" style="display: @(isLimit ? "block" : "none");">
+            <div class="mgb-10">
+                <h3 class="fsz-15 mgb-2 cl-primary">Limits & Constants</h3>
+                <p class="text-muted fsz-12">
+                    Configure physical constants and default simulation limits.
+                </p>
+            </div>
+
+            @if (isLoadingSimulationSettings)
+            {
+                <p class="fsz-12 op-6">Loading simulation settings...</p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(simulationSettingsError))
+            {
+                <p class="fsz-12 cl-fatal mgb-10" role="alert">
+                    @simulationSettingsError
+                </p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(simulationSettingsMessage))
+            {
+                <p class="fsz-12 cl-success mgb-10" role="status">
+                    @simulationSettingsMessage
+                </p>
+            }
+
+            <div class="settings-card mgb-10 pd bdl corner-2">
+                <h4 class="mg-0 fsz-15">Physical Constants</h4>
+                <p class="text-muted fsz-12">
+                    Values used as defaults in physics simulations.
+                </p>
+
+                <div class="mgt-5">
+                    <div>
+                        <h5 for="defaultGravity" class="cl-13">Gravitational Acceleration (m/s²)</h5>
+                        <p class="text-muted fsz-12">
+                            Standard Earth gravity is approximately 9.81 m/s².
+                        </p>
+                    </div>
+                    <input type="number" id="defaultGravity" class="pd corner-2 bd" @bind="gravity" min="0.01" max="100"
+                           step="0.01" />
+                </div>
+            </div>
+
+            <div class="settings-card mgb-15 pd bdl corner-2">
+                <h4 class="mg-0 fsz-15">Simulation Limits</h4>
+
+                <div class="mgt-5">
+                    <h5 for="maximumSimulationTime" class="cl-13">Maximum Simulation Time (s)</h5>
+                    <input type="number" id="maximumSimulationTime" class="pd corner-2 bd" @bind="maximumSimulationTime"
+                           min="1" step="1" />
+                </div>
+
+                <div class="mgt-5">
+                    <h5 for="maximumDataPoints" class="cl-13">Maximum Data Points</h5>
+                    <input type="number" id="maximumDataPoints" class="pd corner-2 bd" @bind="maximumDataPoints"
+                           min="100" step="100" />
+                </div>
+
+                <div class="mgt-5">
+                    <h5 for="defaultTimeStep" class="cl-13">Default Time Step (s)</h5>
+                    <input type="number" id="defaultTimeStep" class="pd corner-2 bd" @bind="defaultTimeStep" min="0.001"
+                           step="0.001" />
+                </div>
+            </div>
+
+            <div class="mgb-5">
+                <p class="text-muted fsz-12 mg-0">
+                    Changes to these values should affect new simulations only.
+                    Previously saved simulation results should retain their recorded
+                    parameters.
+                </p>
+            </div>
+
+            <button class="pd bg-primary bd-none corner-2 text-right block" @onclick="SaveSimulationSettingsAsync"
+                    disabled="@(isLoadingSimulationSettings || isSavingSimulationSettings)">
+                @(isSavingSimulationSettings ? "Saving..." : "Save Setting")
+            </button>
+        </div>
+
+        @* DEFAULT PARAMETERS TAB *@
+        @* <div class="settings-tab-content" id="defaultParametersTab"
+             style="display: @(isParameters ? "block" : "none");">
+            <div class="mgb-10">
+                <h3 class="fsz-15 mgb-2 cl-primary">Default Parameters</h3>
+                <p class="text-muted fsz-12">
+                    Set the initial values used when creating a new simulation.
+                </p>
+            </div>
+
+            <div class="settings-card mgb-10 pd bdl corner-2">
+                <h4 class="mg-0 fsz-15">Projectile Motion</h4>
+
+                <div class="mgt-5">
+                    <h5 for="maximumSimulationTime" class="cl-13">Initial Velocity (m/s)</h5>
+                    <input type="number" id="maximumSimulationTime" class="pd corner-2 bd" value="30" min="0" />
+                </div>
+
+                <div class="mgt-5">
+                    <h5 for="maximumDataPoints" class="cl-13">Launch Angle (degrees)</h5>
+                    <input type="number" id="maximumDataPoints" class="pd corner-2 bd" value="45" min="0" max="90" />
+                </div>
+
+                <div class="mgt-5">
+                    <h5 for="maximumDataPoints" class="cl-13">Initial Height (m)</h5>
+                    <input type="number" id="maximumDataPoints" class="pd corner-2 bd" value="0" min="0" step="0.1" />
+                </div>
+
+                <div class="mgt-5">
+                    <h5 for="defaultTimeStep" class="cl-13">Time Step (s)</h5>
+                    <input type="number" id="defaultTimeStep" class="pd corner-2 bd" value="0.05" min="0.001"
+                           step="0.001" />
+                </div>
+            </div>
+
+            <div class="mgb-5">
+                <p class="text-muted fsz-12 mg-0">
+                    These values are intended to prefill new simulations. You can
+                    change them for an individual run before starting it.
+                </p>
+            </div>
+
+            <button class="pd bg-primary corner-2 text-right block">Save Setting</button>
+        </div> *@
+
+        @* DATA & STORAGE TAB *@
+        @* <div class="settings-tab-content" id="dataStorageTab" style="display: @(isStorage ? "block" : "none");">
+            <div class="mgb-10">
+                <h3 class="fsz-15 mgb-2 cl-primary">Data & Storage</h3>
+                <p class="text-muted fsz-12">
+                    Manage simulation data, saving preferences, and exported files.
+                </p>
+            </div>
+
+            <div class="settings-card mgb-5 pd bdl corner-2">
+                <h4 class="mg-0 fsz-15">Data Preferences</h4>
+
+                <div class="flex flex-spacebetween mgt-5">
+                    <div>
+                        <p class="fsz-12">
+                            Automatically save simulation results when supported.
+                        </p>
+                    </div>
+                    <input type="checkbox" id="automaticSaving" checked />
+                </div>
+
+                <div class="flex flex-spacebetween mgt-5">
+                    <div>
+                        <h4 class="fsz-13">Confirm Before Deleting</h4>
+                        <p class="fsz-12">
+                            Ask for confirmation before deleting saved data.
+                        </p>
+                    </div>
+                    <input type="checkbox" id="confirmBeforeDeleting" checked />
+                </div>
+            </div>
+
+            <div class="settings-card mgb-5 pd bdl corner-2">
+                <h4 class="mg-0 fsz-13">Export Preferences</h4>
+
+                <div class="mgt-5">
+                    <div class="pdb-2">
+                        <h4 class="fsz-12">Default Export Format</h4>
+                    </div>
+                    <select id="defaultExportFormat" class="pd bd ccorner-2 bg-transparent">
+                        <option value="csv">CSV</option>
+                        <option value="txt">TXT</option>
+                        <option value="png">PNG</option>
+                        <option value="pdf">PDF</option>
+                        <option value="docx">DOCX</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mgb-10">
+                <h4 class="mg-0 fsz-13 pdb-2">Storage Information</h4>
+                <p class="text-muted fsz-12 mg-0">
+                    Your saved simulations and notes are managed through your
+                    connected PSS storage service.
+                </p>
+                <p class="fsz-12 mg-0">
+                    Saved simulation data should be deleted only through the
+                    appropriate data-management feature.
+                </p>
+            </div>
+
+            <button class="pd bg-primary corner-2 text-right block">Save Setting</button>
+        </div> *@
+
+        @* ABOUT TAB *@
+        
+        @* ABOUT TAB *@
+        <div class="settings-tab-content" id="aboutTab" style="display: @(isAbout ? "block" : "none");">
+
+            <div class="mgb-20">
+                <h3 class="fsz-15 mgb-2 cl-primary">About Physics Simulation Studio</h3>
+                <p class="text-muted fsz-12">
+                    Learn about PSS, its purpose, capabilities, and vision for computational physics.
+                </p>
+            </div>
+
+            @* PSS BRANDING *@
+            <div class="settings-card mgb-10">
+                <div class="text-center">
+                    <h2 class="mg-0 fsz-24 cl-primary">PSS</h2>
+                    <p class="fsz-15 mg-0">Physics Simulation Studio</p>
+                    <p class="text-muted fsz-13 mg-0 mgt-5">
+                        Simulate. Visualize. Analyze. Understand.
+                    </p>
+                    <p class="text-muted fsz-12 mgt-10">
+                        A computational environment for exploring physical systems
+                        through numerical simulation and scientific analysis.
+                    </p>
+                </div>
+            </div>
+
+            @* ABOUT THE PLATFORM *@
+            <div class="mgb-20">
+                <h4 class="mg-0 fsz-15 pdb-3">What is PSS?</h4>
+                <p class="text-muted fsz-13">
+                    Physics Simulation Studio (PSS) is an interactive software platform
+                    designed to help users model physical systems, run numerical
+                    simulations, and examine the results through visual and numerical
+                    analysis.
+                </p>
+                <p class="text-muted fsz-13">
+                    PSS brings simulation parameters, calculated results, graphs,
+                    data tables, simulation history, notes, and export tools into
+                    one workspace. Its goal is to make computational physics easier
+                    to explore, understand, and apply.
+                </p>
+            </div>
+
+            @* CORE CAPABILITIES *@
+            <div class="mgb-20">
+                <h4 class="mg-0 fsz-15 pdb-3">Core Capabilities</h4>
+
+                <div class="settings-card mgb-10">
+                    <div class="flex" style="align-items: flex-start; gap: 10px;">
+                        <i class="mdi mdi-calculator-variant fsz-20 cl-primary"></i>
+                        <div>
+                            <h5 class="mg-0 fsz-14">Numerical Simulation</h5>
+                            <p class="text-muted fsz-12 mgt-5">
+                                Configure simulation parameters and compute the
+                                behaviour of supported physical models using
+                                numerical methods.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card mgb-10">
+                    <div class="flex" style="align-items: flex-start; gap: 10px;">
+                        <i class="mdi mdi-chart-line fsz-20 cl-primary"></i>
+                        <div>
+                            <h5 class="mg-0 fsz-14">Visualization and Analysis</h5>
+                            <p class="text-muted fsz-12 mgt-5">
+                                Explore simulation results through interactive graphs,
+                                numerical data tables, and calculated physical
+                                quantities.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card mgb-10">
+                    <div class="flex" style="align-items: flex-start; gap: 10px;">
+                        <i class="mdi mdi-history fsz-20 cl-primary"></i>
+                        <div>
+                            <h5 class="mg-0 fsz-14">Simulation History and Notes</h5>
+                            <p class="text-muted fsz-12 mgt-5">
+                                Save and revisit simulation results, retain the
+                                parameters used for previous runs, and document
+                                observations with simulation notes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card mgb-10">
+                    <div class="flex" style="align-items: flex-start; gap: 10px;">
+                        <i class="mdi mdi-file-export-outline fsz-20 cl-primary"></i>
+                        <div>
+                            <h5 class="mg-0 fsz-14">Data Export</h5>
+                            <p class="text-muted fsz-12 mgt-5">
+                                Export simulation data and results into supported
+                                formats for further analysis, reporting, and record
+                                keeping.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card mgb-10">
+                    <div class="flex" style="align-items: flex-start; gap: 10px;">
+                        <i class="mdi mdi-tune-variant fsz-20 cl-primary"></i>
+                        <div>
+                            <h5 class="mg-0 fsz-14">Configurable Simulation Settings</h5>
+                            <p class="text-muted fsz-12 mgt-5">
+                                Configure global physical constants, simulation
+                                duration limits, data-point limits, and default
+                                time-step settings where supported.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* INTENDED USERS *@
+            <div class="mgb-20">
+                <h4 class="mg-0 fsz-15 pdb-3">Who is PSS for?</h4>
+                <p class="text-muted fsz-13">
+                    PSS is intended for students learning physics, educators
+                    demonstrating physical concepts, researchers exploring numerical
+                    models, and developers building an understanding of computational
+                    methods.
+                </p>
+            </div>
+
+            @* PROJECT VISION *@
+            <div class="mgb-20">
+                <h4 class="mg-0 fsz-15 pdb-3">Vision and Direction</h4>
+                <p class="text-muted fsz-13">
+                    PSS is being developed as a modular environment for computational
+                    physics. Its long-term direction is to expand the range of
+                    supported physical models, numerical methods, visualization
+                    capabilities, and scientific analysis tools within one integrated
+                    platform.
+                </p>
+                <p class="text-muted fsz-13">
+                    The aim is not simply to calculate answers, but to help users
+                    investigate how physical systems behave, understand the results,
+                    and communicate their findings.
+                </p>
+            </div>
+
+            @* APPLICATION INFORMATION *@
+            <div class="mgb-20">
+                <h4 class="mg-0 fsz-15 pdb-3">Application Information</h4>
+
+                <div class="flex flex-spacebetween mgt-5">
+                    <span class="text-muted fsz-13">Application</span>
+                    <span class="fsz-12">Physics Simulation Studio</span>
+                </div>
+
+                <div class="flex flex-spacebetween mgt-5">
+                    <span class="text-muted fsz-13">Abbreviation</span>
+                    <span class="fsz-12">PSS</span>
+                </div>
+
+                <div class="flex flex-spacebetween mgt-5">
+                    <span class="text-muted fsz-13">Version</span>
+                    <span class="fsz-12">1.0.0</span>
+                </div>
+
+                <div class="flex flex-spacebetween mgt-5">
+                    <span class="text-muted fsz-13">Platform</span>
+                    <span class="fsz-12">Web Application</span>
+                </div>
+            </div>
+
+            @* FOOTER *@
+            <div class="settings-card">
+                <div class="text-center">
+                    <p class="fsz-13 mg-0">
+                        Physics Simulation Studio
+                    </p>
+                    <p class="text-muted fsz-12 mgt-5">
+                        An evolving platform for computational physics
+                        and scientific exploration.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isSetting = false;
+    private bool isGeneral = true;
+    private bool isAppearance = false;
+    private bool isLimit = false;
+    private bool isParameters = false;
+    private bool isStorage = false;
+    private bool isAbout = false;
+
+    private bool showTipsOnStartup = true;
+    private bool autoSaveResults = true;
+    private bool confirmBeforeDeleting = true;
+
+    private bool isLoadingGeneralSettings = false;
+    private bool isSavingGeneralSettings = false;
+    private string? generalSettingsError;
+    private string? generalSettingsMessage;
+
+    private double gravity = 9.81;
+    private double maximumSimulationTime = 100;
+    private int maximumDataPoints = 10000;
+    private double defaultTimeStep = 0.05;
+
+    private bool isLoadingSimulationSettings;
+    private bool isSavingSimulationSettings;
+    private string? simulationSettingsError;
+    private string? simulationSettingsMessage;
+
+    private void IsSetting()
+    {
+        isSetting = !isSetting;
+    }
+
+    private void IsGeneral()
+    {
+        isGeneral = true;
+        isAppearance = false;
+        isLimit = false;
+        isParameters = false;
+        isStorage = false;
+        isAbout = false;
+    }
+
+    private void IsAppearance()
+    {
+        isGeneral = false;
+        isAppearance = true;
+        isLimit = false;
+        isParameters = false;
+        isStorage = false;
+        isAbout = false;
+    }
+
+    private void IsLimit()
+    {
+        isGeneral = false;
+        isAppearance = false;
+        isLimit = true;
+        isParameters = false;
+        isStorage = false;
+        isAbout = false;
+    }
+
+    private void IsParameters()
+    {
+        isGeneral = false;
+        isAppearance = false;
+        isLimit = false;
+        isParameters = true;
+        isStorage = false;
+        isAbout = false;
+    }
+
+    private void IsStorage()
+    {
+        isGeneral = false;
+        isAppearance = false;
+        isLimit = false;
+        isParameters = false;
+        isStorage = true;
+        isAbout = false;
+    }
+
+    private void IsAbout()
+    {
+        isGeneral = false;
+        isAppearance = false;
+        isLimit = false;
+        isParameters = false;
+        isStorage = false;
+        isAbout = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGeneralSettingsAsync();
+        await LoadSimulationSettingsAsync();
+    }
+
+    private async Task LoadGeneralSettingsAsync()
+    {
+        isLoadingGeneralSettings = true;
+        generalSettingsError = null;
+
+        try
+        {
+            var settings = await Http.GetFromJsonAsync<GeneralSettingsResponse>(
+                "/api/settings/general/");
+
+            if (settings is null)
+            {
+                generalSettingsError = "The backend returned no general settings.";
+                return;
+            }
+
+            showTipsOnStartup = settings.ShowTipsOnStartup;
+            autoSaveResults = settings.AutoSaveResults;
+            confirmBeforeDeleting = settings.ConfirmBeforeDeleting;
+        }
+        catch (HttpRequestException)
+        {
+            generalSettingsError =
+                "Could not connect to the PSS backend. Check that the API is running on port 5004.";
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            generalSettingsError =
+                "Could not read the general settings returned by the backend.";
+        }
+        finally
+        {
+            isLoadingGeneralSettings = false;
+        }
+    }
+
+    private async Task LoadSimulationSettingsAsync()
+    {
+        isLoadingSimulationSettings = true;
+        simulationSettingsError = null;
+
+        try
+        {
+            var settings =
+                await Http.GetFromJsonAsync<SimulationSettingsResponse>(
+                    "/api/settings/simulation/");
+
+            if (settings is null)
+            {
+                simulationSettingsError =
+                    "The backend returned no simulation settings.";
+                return;
+            }
+
+            gravity = settings.Gravity;
+            maximumSimulationTime = settings.MaximumSimulationTime;
+            maximumDataPoints = settings.MaximumDataPoints;
+            defaultTimeStep = settings.DefaultTimeStep;
+        }
+        catch (HttpRequestException)
+        {
+            simulationSettingsError =
+                "Could not load simulation settings. Check that the PSS backend is running.";
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            simulationSettingsError =
+                "Could not read the simulation settings returned by the backend.";
+        }
+        finally
+        {
+            isLoadingSimulationSettings = false;
+        }
+    }
+
+    private async Task UpdateGeneralSettingAsync(
+    string settingName,
+    bool newValue)
+    {
+        if (isLoadingGeneralSettings || isSavingGeneralSettings)
+            return;
+
+        var previousShowTips = showTipsOnStartup;
+        var previousAutoSave = autoSaveResults;
+        var previousConfirmDelete = confirmBeforeDeleting;
+
+        switch (settingName)
+        {
+            case nameof(showTipsOnStartup):
+                showTipsOnStartup = newValue;
+                break;
+
+            case nameof(autoSaveResults):
+                autoSaveResults = newValue;
+                break;
+
+            case nameof(confirmBeforeDeleting):
+                confirmBeforeDeleting = newValue;
+                break;
+
+            default:
+                return;
+        }
+
+        isSavingGeneralSettings = true;
+        generalSettingsError = null;
+        generalSettingsMessage = null;
+
+        try
+        {
+            var request = new
+            {
+                ShowTipsOnStartup = showTipsOnStartup,
+                AutoSaveResults = autoSaveResults,
+                ConfirmBeforeDeleting = confirmBeforeDeleting
+            };
+
+            using var response = await Http.PutAsJsonAsync(
+                "/api/settings/general/",
+                request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                generalSettingsMessage = "General settings saved successfully.";
+            }
+            else
+            {
+                showTipsOnStartup = previousShowTips;
+                autoSaveResults = previousAutoSave;
+                confirmBeforeDeleting = previousConfirmDelete;
+
+                generalSettingsError =
+                    $"Could not save settings. Server returned {(int)response.StatusCode}.";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            showTipsOnStartup = previousShowTips;
+            autoSaveResults = previousAutoSave;
+            confirmBeforeDeleting = previousConfirmDelete;
+
+            generalSettingsError =
+                "Could not connect to the PSS backend. Your previous settings have been restored.";
+        }
+        finally
+        {
+            isSavingGeneralSettings = false;
+        }
+    }
+
+    private async Task SaveSimulationSettingsAsync()
+    {
+        if (isLoadingSimulationSettings || isSavingSimulationSettings)
+            return;
+
+        simulationSettingsError = null;
+        simulationSettingsMessage = null;
+
+        if (!double.IsFinite(gravity) ||
+            gravity < 0.01 || gravity > 100)
+        {
+            simulationSettingsError =
+                "Gravity must be between 0.01 and 100.";
+            return;
+        }
+
+        if (!double.IsFinite(maximumSimulationTime) ||
+            maximumSimulationTime < 1)
+        {
+            simulationSettingsError =
+                "Maximum simulation time must be at least 1 second.";
+            return;
+        }
+
+        if (maximumDataPoints < 100)
+        {
+            simulationSettingsError =
+                "Maximum data points must be at least 100.";
+            return;
+        }
+
+        if (!double.IsFinite(defaultTimeStep) ||
+            defaultTimeStep < 0.001)
+        {
+            simulationSettingsError =
+                "Default time step must be at least 0.001 seconds.";
+            return;
+        }
+
+        isSavingSimulationSettings = true;
+
+        try
+        {
+            var request = new
+            {
+                Gravity = gravity,
+                MaximumSimulationTime = maximumSimulationTime,
+                MaximumDataPoints = maximumDataPoints,
+                DefaultTimeStep = defaultTimeStep
+            };
+
+            using var response = await Http.PutAsJsonAsync(
+                "/api/settings/simulation/",
+                request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                simulationSettingsMessage =
+                    "Simulation settings saved successfully.";
+            }
+            else
+            {
+                simulationSettingsError =
+                    $"Could not save simulation settings. Server returned {(int)response.StatusCode}.";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            simulationSettingsError =
+                "Could not connect to the PSS backend. Your changes were not saved.";
+        }
+        finally
+        {
+            isSavingSimulationSettings = false;
+        }
+    }
+}

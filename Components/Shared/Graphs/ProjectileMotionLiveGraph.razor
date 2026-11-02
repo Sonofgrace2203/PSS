@@ -1,0 +1,94 @@
+@using ApexCharts
+@using pss.Components.Shared
+@using System.Globalization
+
+<div class="wf">
+    <ApexChart TItem="ProjectileTrajectoryPoint" Title="Projectile Trajectory" Height="280" @ref="chart"
+               Options="@chartOptions" FormatYAxisLabel="@FormatYAxisLabel">
+        <ApexYAxis />
+
+        <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="Points" Name="Trajectory" SeriesType="SeriesType.Line"
+                         XValue="p => (decimal?)p.X" YValue="p => (decimal?)p.Y" />
+
+        <ApexPointSeries TItem="ProjectileTrajectoryPoint" Items="currentPointItems" Name="Current Position"
+                         SeriesType="SeriesType.Scatter" XValue="p => (decimal?)p.X" YValue="p => (decimal?)p.Y" />
+    </ApexChart>
+
+    @if (Points.Count == 0)
+    {
+        <p class="fsz-12 op-6">
+            Run a simulation to display the projectile trajectory.
+        </p>
+    }
+    else
+    {
+        <div class="flex flex-spacebetween fsz-12 pdb-1">
+            <span>Horizontal distance: @CurrentX.ToString("F2") m</span>
+            <span>Height: @CurrentY.ToString("F2") m</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<ProjectileTrajectoryPoint> Points { get; set; } = new();
+
+    [Parameter]
+    public int CurrentPointIndex { get; set; }
+
+    private ApexChart<ProjectileTrajectoryPoint>? chart;
+
+    private List<ProjectileTrajectoryPoint> currentPointItems = new();
+
+    private double CurrentX =>
+        Points.Count == 0 ? 0 : Points[SafeIndex].X;
+
+    private double CurrentY =>
+        Points.Count == 0 ? 0 : Points[SafeIndex].Y;
+
+    private int SafeIndex =>
+        Math.Clamp(CurrentPointIndex, 0, Math.Max(0, Points.Count - 1));
+        
+    protected override async Task OnParametersSetAsync()
+    {
+        currentPointItems = Points.Count == 0
+            ? new List<ProjectileTrajectoryPoint>()
+            : new List<ProjectileTrajectoryPoint>
+            {
+                Points[SafeIndex]
+            };
+
+        if (chart is not null)
+        {
+            await chart.UpdateSeriesAsync(animate: false);
+        }
+    }
+
+    private string FormatYAxisLabel(decimal value)
+    {
+        return value.ToString("F2", CultureInfo.InvariantCulture);
+    }
+
+    
+    private ApexChartOptions<ProjectileTrajectoryPoint> chartOptions = new()
+    {
+        Xaxis = new XAxis
+        {
+            Type = XAxisType.Numeric,
+            Min = 0,
+            StepSize = 5,
+            Labels = new XAxisLabels
+            {
+                HideOverlappingLabels = true,
+                Rotate = 0
+            }
+        },
+        Tooltip = new Tooltip
+        {
+            Enabled = true,
+            Shared = true,
+            Intersect = false
+        }
+    };
+
+}

@@ -1,0 +1,47 @@
+<div class="bg-black-06" style="position: fixed; top: 0; bottom: 0; left: 0; right: 0; z-index: 10;">
+    <div class="wf flex flex-center align-center align-justify" style="height: 100vh;">
+        <div class="pd bd corner-2 mgt-25 bg-card pd-10 corner-2 wx-25 text-center" role="alert">
+            <h3 class="mg-0 fsz-16 cl-primary mgb-5">
+                @TitleStart {@TitleAction} @TitleEnd
+            </h3>
+
+            <p class="mgt-2 fsz-13 mgb-5">
+                @SubTitle
+            </p>
+
+            <div class="flex flex-center wf" style="gap: 10px;">
+                <button class="bd corner-2 pd" style="background-color: #b42318; color: white;"
+                        disabled="@ConfirmButtonAble" @onclick="HandleOnConfirm">
+                    @ConfirmButtonProcess
+                </button>
+
+                <button class="bd corner-2 pd bg-primary-01" disabled="@CancelButtonAble" @onclick="HandleOnCancel">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string TitleStart { get; set; } = "";
+    [Parameter] public int TitleAction { get; set; }
+    [Parameter] public string TitleEnd { get; set; } = "";
+    [Parameter] public string SubTitle { get; set; } = "";
+    [Parameter] public bool CancelButtonAble { get; set; }
+    [Parameter] public bool ConfirmButtonAble { get; set; }
+    [Parameter] public string ConfirmButtonProcess { get; set; } = "";
+
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+
+    public async Task HandleOnCancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+    public async Task HandleOnConfirm()
+    {
+        await OnConfirm.InvokeAsync();
+    }
+}

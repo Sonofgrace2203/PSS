@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Photoelectric Effect">
+<title>Photoelectric Effect</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><path d="M8 49h34" stroke="#123b70" stroke-width="4"/><path d="M13 40l7-9 7 9 7-9" fill="none" stroke="#f59e0b" stroke-width="3"/><g fill="#2563eb"><circle cx="49" cy="20" r="4"/><circle cx="59" cy="33" r="3"/><circle cx="48" cy="48" r="3"/></g><path d="M38 28l8-6m8 17 3-4m-9 20v-5" stroke="#2563eb" stroke-width="2.5"/></g>
+</svg>

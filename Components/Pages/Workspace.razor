@@ -1,0 +1,2201 @@
+@page "/SimulationWorkSpace"
+@using Microsoft.AspNetCore.Components
+@using pss.Components.Shared
+@using System.Net.Http.Json
+@using System.Text.Json
+@using pss.Components.Shared.Graphs
+@using System.Linq
+@using System.Globalization
+@using System.Text
+@using pss.Models
+@using System.IO
+@using pss.Models.SavedSimulationDetails
+@using pss.Models.Download
+@using pss.Models.Settings
+@using Microsoft.AspNetCore.Authorization
+@inject IJSRuntime JS
+
+@inject HttpClient Http
+@implements IDisposable
+
+@attribute [Authorize]
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="flex flex-spacebetween">
+    <div class="mgb-10">
+        @if (simulationName.Count() < 1)
+        {
+            <h2 class="mg-0 fsz-20 cl-primary">Projectile Motion</h2>
+        }
+        else
+        {
+            <h2 class="mg-0 fsz-20 cl-primary">@simulationName</h2>
+        }
+    </div>
+
+    @* <div>
+        <i class="mdi mdi-star-outline fsz-25"></i>
+        <i class="mdi mdi-share-outline fsz-25"></i>
+        <i class="mdi mdi-menu-swap fsz-25"></i>
+    </div> *@
+</div>
+
+<div class="mgb-10">
+    <div class="flex flow flex-start">
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01" @onclick="IsSimulation">Simulation</button>
+
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01" @onclick="IsGraph">Graph</button>
+
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01" @onclick="IsDataTable">Data Table</button>
+        
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01" @onclick="IsNotes">Notes</button>
+
+        <button class="bd corner-2 pd mgr-1 mgb-1 block bg-primary-01" @onclick="IsExport">Export</button>
+
+    </div>
+</div>
+
+<div class="scroll-y" style="height: 90vh;">
+    <div style="display: @(isSimulation ? "block" : "none");">
+        <div class="row responsive miwx-3 mgb">
+            <div class="mgt colm-2 miwx-25 mawx-3 pd bg-card corner-2 bdl mgr-5 mgb-10">
+                <div class="flex flex-spacebetween flex-center mgb-5">
+                    <h3 class="mg-0 pdb-5 fsz-15 pdb"> Parameters</h3>
+                    <i class="mdi mdi-menu-down fsz-25 mgt--5 fw-bold"></i>
+                </div>
+
+                <div class="mgb-10">
+                    <label class="fsz-12">Simulation name *</label>
+
+                    <input type="text" class="corner-2 pd block bd wf mgt-2"
+                           placeholder="e.g. Projectile test at 45 degrees" maxlength="100" required
+                           disabled="@parametersLocked" @bind="simulationName" @bind:event="oninput" />
+
+                    @if (string.IsNullOrWhiteSpace(simulationName))
+                    {
+                        <p class="fsz-10 cl-fatal mgt-2">
+                            A simulation name is required before running.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="fsz-10 op-6 mgt-2">
+                            Your experiment name will appear in Saved Results.
+                        </p>
+                    }
+                </div>
+
+                <div class="grid gap-1 colm-3">
+                    <div class="mgb-10">
+                        <div class="wf mgb-5">
+                            <h5 class="mg-0 pdb-2">Initial Velicity (u)</h5>
+                            <div class="wf">
+                                <input type="number" placeholder="30" class="corner-2 pd block bd wp-80"
+                                       disabled="@parametersLocked" @bind="initialVelocity" @bind:event="oninput">
+                                
+                                <div>
+                                    <input type="range" class="wf mgt-2" min="0" max="100" step="1"
+                                           disabled="@parametersLocked" @bind="initialVelocity" @bind:event="oninput" />
+
+                                    <div class="flex flex-spacebetween fsz-12">
+                                        <span>0 m/s</span>
+                                        <span>@initialVelocity.ToString("F0") m/s</span>
+                                        <span>100 m/s</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wf mgb-5">
+                            <h5 class="mg-0 pdb-2">Launch Angle (^)</h5>
+                            <div class="wf">
+                                <input type="number" placeholder="45" class="corner-2 pd block bd wp-80"
+                                       disabled="@parametersLocked" @bind="launchAngle" @bind:event="oninput">
+                                
+                                <div>
+                                    <input type="range" class="wf mgt-2" min="0" max="90" step="1" @bind="launchAngle"
+                                           disabled="@parametersLocked" @bind:event="oninput" />
+
+                                    <div class="flex flex-spacebetween fsz-12">
+                                        <span>0°</span>
+                                        <span>@launchAngle.ToString("F0")°</span>
+                                        <span>90°</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wf">
+                            <h5 class="mg-0 pdb-2">Gravity (m/r)</h5>
+                            <div class="wf">
+                                <input type="number" placeholder="0.41" class="corner-2 pd block bd wp-80"
+                                       disabled="@parametersLocked" @bind="gravity" @bind:event="oninput">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wf mgb-5">
+                        <div class="wf">
+                            <button class="corner-2 pd bd wf flex flex-spacebetween mgb-3" @onclick="ToggleMoreOptions"
+                                    disabled="@parametersLocked">
+                                <span>More Options</span>
+                                <i class="mdi @(showMoreOptions ? "mdi-menu-up" : "mdi-menu-down")"></i>
+                            </button>
+
+                            @if (showMoreOptions)
+                            {
+                                <div class="mgt-2 pd bd corner-2">
+                                    <div class="mgb-5 clip">
+                                        <h5 class="mg-0 pdb-2">Initial Height (m)</h5>
+                                        <input type="number" class="corner-2 pd block bd wf" min="0" step="0.5"
+                                               disabled="@parametersLocked" @bind="initialHeight" @bind:event="oninput" />
+                                    </div>
+
+                                    <div class="clip">
+                                        <h5 class="mg-0 pdb-2">Time Step (s)</h5>
+                                        <input type="number" class="corner-2 pd block bd wf" min="0.001" max="0.5"
+                                               disabled="@parametersLocked" step="any" @bind="timeStep" />
+                                        <p class="fsz-10 mgt-3 op-6">
+                                            Smaller time steps produce more trajectory points.
+                                        </p>
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+
+                    <div>
+                        <button class="bd corner-1 pd" style="cursor: pointer;" @onclick="ResetSimulation"
+                                disabled="@isLoadedFromHistory">
+                            Reset
+                        </button>
+
+                        <button class="bd corner-1 pd bg-primary" style="cursor: pointer;" @onclick="RunSimulation"
+                                disabled="@(parametersLocked || string.IsNullOrWhiteSpace(simulationName))">
+                            @(isRunning ? "Running..." : isPlaying ? "Playing..." : "Run Simulation")
+                        </button>
+                    </div>
+
+                    @if (isRunning)
+                    {
+                        <p class="mg-0 fsz-12 cl-secondary">
+                            @(SimulationIdFromQuery.HasValue
+                                ? "Loading saved simulation..."
+                                : "Running simulation...")
+                        </p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(successMessage))
+                    {
+                        <p class="mg-0 fsz-12 cl-success">@successMessage</p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <p class="mg-0 fsz-12 cl-fatal">@errorMessage</p>
+                    }
+                </div>
+            </div>
+
+            <div style="display: @(runSimulation ? "block" : "none");">
+                <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1">
+
+                    
+                    <div class="mgb-5 bd corner-2 shadow-border-2 pd">
+                        <div class="flex flex-spacebetween">
+                            <h4 class="mg-0 pdb fsz-13 cl-primary">Console Output</h4>
+
+                            @if (isRunning)
+                            {
+                                <p class="mg-0 fsz-12 cl-gray">Calculating</p>
+                            }
+                            else if (!string.IsNullOrWhiteSpace(errorMessage))
+                            {
+                                <p class="mg-0 fsz-12 cl-fatal">Failed</p>
+                            }
+                            else if (isPlaying)
+                            {
+                                <p class="mg-0 fsz-12 cl-success">Playing</p>
+                            }
+                            else if (trajectory.Count > 0)
+                            {
+                                <p class="mg-0 fsz-12 cl-success">Paused / Ready</p>
+                            }
+                            else
+                            {
+                                <p class="mg-0 fsz-12 cl-gray">Idle</p>
+                            }
+                        </div>
+
+                        <div class="mgb-5">
+                            <div class="bg-black-01 corner-3 bd hx-01 mgt-2" style="overflow:hidden;">
+                                @if (isRunning)
+                                {
+                                    <div class="bg-success corner-3 hx-01"
+                                         style="width:35%; animation: pss-loading 1.2s ease-in-out infinite;">
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="bg-success corner-3 hx-01"
+                                         style="width:@(playbackProgress.ToString("F0"))%; transition:width 0.08s linear;">
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="flex flex-spacebetween">
+                                <span class="fsz-12">
+                                    @(isRunning
+                                        ? "Calculating simulation..."
+                                        : $"{playbackProgress:F0}%")
+                                </span>
+                                <span class="fsz-12">
+                                    @(isRunning ? "Please wait" : "Playback")
+                                </span>
+                            </div>
+                        </div>
+
+
+                        <div style="max-height: 240px; overflow-y: auto;">
+                            @foreach (var line in consoleLines)
+                            {
+                                <div class="pdb-1 mgb-1 bdb fsz-12 cl-success" style="overflow-wrap: anywhere;">
+                                    @line
+                                </div>
+                            }
+
+                            @if (consoleLines.Count == 0)
+                            {
+                                <p class="fsz-12 op-6 cl-error">Run a simulation to view console output.</p>
+                            }
+                        </div>
+                    </div>
+                                
+                    <div class="mgb-5">
+                        <h4 class="mg-0 pdb fsz-13 cl-primary">Live Graph</h4>
+
+                        <div class="wf">
+                            <ProjectileMotionLiveGraph Points="trajectory" CurrentPointIndex="currentPointIndex" />
+                        </div>
+
+                        <div class="flex flex-spacebetween fsz-12 pdb-1">
+                            <span>Time: @CurrentTime.ToString("F2") s</span>
+                            <span>Frame: @CurrentFrame / @trajectory.Count</span>
+                        </div>
+
+                        <div class="bg-black-01 corner-3 bd hx-01 mgt-2">
+                            <div class="bg-secondary corner-3 hx-01"
+                                 style="width: @(trajectory.Count > 0 ? playbackProgress : 0)%; transition: width 0.08s linear;">
+                            </div>
+                        </div>
+
+                        <div class="mgt flex flex-center">
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01"
+                                    @onclick="PlayPlayback" disabled="@(trajectory.Count == 0)" title="Play or resume">
+                                <i class="mdi mdi-play fsz-25"></i>
+                            </button>
+
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01"
+                                    @onclick="StepBackward" disabled="@(trajectory.Count == 0)" title="Previous frame">
+                                <i class="mdi mdi-skip-backward fsz-25"></i>
+                            </button>
+
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01"
+                                    @onclick="ResetPlayback" disabled="@(trajectory.Count == 0)" title="Reset">
+                                <i class="mdi mdi-stop fsz-25"></i>
+                            </button>
+
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01"
+                                    @onclick="PausePlayback" disabled="@(!isPlaying)" title="Pause">
+                                <i class="mdi mdi-pause fsz-25"></i>
+                            </button>
+
+                            <button class="bd pd-1 corner-1 mgr-1 mgb-1 cl-secondary bg-secondary-01"
+                                    @onclick="StepForward" disabled="@(trajectory.Count == 0)" title="Next frame">
+                                <i class="mdi mdi-skip-forward fsz-25"></i>
+                            </button>
+
+                            <select class="bd corner-1 pd-1 bg-transparent" @bind="playbackDelayMs"
+                                    title="Playback speed">
+                                <option value="120">0.5x</option>
+                                <option value="60">1x</option>
+                                <option value="30">2x</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="bg-primary-01 flex flex-spacearound corner-2 pd bd wvg-5">
+                        <div class="flex flex-center stack bdr wf">
+                            <h5 class="mg-0 pdb op-5">Range</h5>
+                            <h4 class="mg-0">@rangeResult.ToString("F2") m</h4>
+                        </div>
+                        <div class="flex flex-center stack bdr wf">
+                            <h5 class="mg-0 pdb op-5">Max Height</h5>
+                            <h4 class="mg-0">@maximumHeightResult.ToString("F2") m</h4>
+                        </div>
+                        <div class="flex flex-center stack bdr wf">
+                            <h5 class="mg-0 pdb op-5">Time of Flight</h5>
+                            <h4 class="mg-0">@timeOfFlightResult.ToString("F2") s</h4>
+                        </div>
+                        <div class="flex flex-center stack wf">
+                            <h5 class="mg-0 pdb op-5">Final Velocity</h5>
+                            <h4 class="mg-0">@finalSpeedResult.ToString("F2") m/s</h4>
+                        </div>
+                    </div>
+
+                    <div class="bg-primary-01 grid gap-1 colm-15 corner-2 pd bd wvl-5">
+                        <div class="flex flex-center stack bdr wf mgb-5 mgt-5">
+                            <h5 class="mg-0 pdb op-5">Range</h5>
+                            <h4 class="mg-0">@rangeResult.ToString("F2") m</h4>
+                        </div>
+                        <div class="flex flex-center stack wf mgb-5 mgt-5">
+                            <h5 class="mg-0 pdb op-5">Max Height</h5>
+                            <h4 class="mg-0">@maximumHeightResult.ToString("F2") m</h4>
+                        </div>
+                        <div class="flex flex-center stack bdr wf mgb-5 mgt-5">
+                            <h5 class="mg-0 pdb op-5">Time of Flight</h5>
+                            <h4 class="mg-0">@timeOfFlightResult.ToString("F2") s</h4>
+                        </div>
+                        <div class="flex flex-center stack wf mgb-5 mgt-5">
+                            <h5 class="mg-0 pdb op-5">Final Velocity</h5>
+                            <h4 class="mg-0">@finalSpeedResult.ToString("F2") m/s</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    @* <div style="display: @(isGraph ? "block" : "none");"> *@
+    <div
+        style="@(isGraph ? "display: block;" : "position: fixed; left: -10000px; top: 0; width: 1200px; display: block; visibility: hidden; pointer-events: none;")">
+        <h3 class="mg-0 text-center pdb-10 fsz-16">
+            Projectile Motion - Graphs
+        </h3>
+
+        <div class="grid gap-1 colm-35">
+            <div>
+                <h5 class="text-center mg-0 pdb-5">
+                    Position vs Time
+                </h5>
+                <div class="pd bd corner-2 shadow-border-1">
+                    <ProjectileAnalysisGraph @ref="positionGraph" Points="trajectory" Title="Position vs Time"
+                                             GraphType="position" Gravity="gravity" />
+                </div>
+            </div>
+
+            <div>
+                <h5 class="text-center mg-0 pdb-5">
+                    Velocity vs Time
+                </h5>
+                <div class="pd bd corner-2 shadow-border-1">
+                    <ProjectileAnalysisGraph @ref="velocityGraph" Points="trajectory" Title="Velocity vs Time"
+                                             GraphType="velocity" Gravity="gravity" />
+                </div>
+            </div>
+
+            <div>
+                <h5 class="text-center mg-0 pdb-5">
+                    Energy vs Time
+                </h5>
+                <div class="pd bd corner-2 shadow-border-1">
+                    <ProjectileAnalysisGraph @ref="energyGraph" Points="trajectory" Title="Energy vs Time"
+                                             GraphType="energy" Gravity="gravity" />
+                </div>
+            </div>
+
+            <div>
+                <h5 class="text-center mg-0 pdb-5">
+                    Displacement vs Time
+                </h5>
+                <div class="pd bd corner-2 shadow-border-1">
+                    <ProjectileAnalysisGraph @ref="displacementGraph" Points="trajectory" Title="Displacement vs Time"
+                                             GraphType="displacement" Gravity="gravity" />
+                </div>
+            </div>
+        </div>
+
+
+
+    </div>
+
+
+
+    <div style="display: @(isDataTable ? "block" : "none");">
+
+        <div class="mgb-10">
+            <h3 class="mg-0 pdb-2 fsz-16">Simulation Data Table</h3>
+            <p class="fsz-12 op-6 mg-0">
+                Numerical results for each projectile trajectory point.
+            </p>
+        </div>
+
+        @if (trajectory.Count == 0)
+        {
+            <div class="pd bg-card corner-2 bd">
+                <h4 class="mg-0 pdb-2">No simulation data yet</h4>
+                <p class="mg-0 fsz-12 op-6">
+                    Open the Simulation tab and run a projectile simulation.
+                    Its numerical results will appear here.
+                </p>
+                <button class="bd corner-2 pd mgt-2 bg-primary-01" @onclick="IsSimulation">
+                    Go to Simulation
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="grid gap-1 colm-3 mgb-10">
+                <div class="pd corner-2 bg-primary-01 cl-primary">
+                    <div class="fsz-12 op-6">Total data points</div>
+                    <h3 class="mg-0">@trajectory.Count</h3>
+                </div>
+
+                <div class="pd corner-2 bg-primary-01 cl-primary">
+                    <div class="fsz-12 op-6">Current time</div>
+                    <h3 class="mg-0">@CurrentTime.ToString("F2") s</h3>
+                </div>
+
+                <div class="pd corner-2 bg-primary-01 cl-primary">
+                    <div class="fsz-12 op-6">Current frame</div>
+                    <h3 class="mg-0">@CurrentFrame / @trajectory.Count</h3>
+                </div>
+            </div>
+
+            <div class="pd bd bg-card corner-2 mgb-10 clip">
+                <label class="fsz-12">Search trajectory data</label>
+                <input type="text" class="bd corner-2 pd wf mgt-2" placeholder="Search time, position, velocity..."
+                       @bind="tableSearch" @bind:event="oninput" @bind:after="ResetTablePage" />
+
+                <div class="mgt-2 mgb-2">
+                    <span class="fsz-12 op-6">
+                        @FilteredTrajectory.Count matching rows
+                    </span>
+                </div>
+            </div>
+
+            <div class="scroll-y" style="height: 70vh;">
+                <div style="overflow-x:auto; max-width:100%;" class="bd corner-2">
+                    <table style="width:100%; border-collapse:collapse; min-width:850px;">
+                        <thead>
+                            <tr class="bg-primary-01">
+                                <th class="cl-primary text-left" style="padding:12px;">Frame</th>
+                                <th class="cl-primary text-left" style="padding:12px;">Time (s)</th>
+                                <th class="cl-primary text-left" style="padding:12px;">X (m)</th>
+                                <th class="cl-primary text-left" style="padding:12px;">Y (m)</th>
+                                <th class="cl-primary text-left" style="padding:12px;">Vx (m/s)</th>
+                                <th class="cl-primary text-left" style="padding:12px;">Vy (m/s)</th>
+                                <th class="cl-primary text-left" style="padding:12px;">Speed (m/s)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in PagedTrajectory)
+                            {
+                                var frame = trajectory.IndexOf(item);
+                                var isCurrent = frame == currentPointIndex;
+
+                                <tr style="border-top:1px solid #8884;
+                                    background:@(isCurrent ? "rgba(40,130,220,0.15)" : "transparent");">
+                                    <td class="cl-primary" style="padding:12px;">@(frame + 1)</td>
+                                    <td style="padding:12px;">@item.Time.ToString("F3")</td>
+                                    <td style="padding:12px;">@item.X.ToString("F3")</td>
+                                    <td style="padding:12px;">@item.Y.ToString("F3")</td>
+                                    <td style="padding:12px;">@item.HorizontalVelocity.ToString("F3")</td>
+                                    <td style="padding:12px;">@item.VerticalVelocity.ToString("F3")</td>
+                                    <td style="padding:12px;">@item.Speed.ToString("F3")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <Pagination CurrentPage="@tablePage" TotalPages="@TablePageCount" TotalItems="@FilteredTrajectory.Count"
+                        PageSize="@pageSize" ItemLabel="row" CurrentPageChanged="HandleTrajectoryPageChanged"
+                        PageSizeChanged="HandleTrajectoryPageSizeChanged" />
+        }
+    </div>
+
+
+    <div style="display: @(isNotes ? "block" : "none");">
+
+        <div class="mgb-10">
+            <h3 class="mg-0 pdb-2 fsz-16">Simulation Notes</h3>
+            <p class="fsz-12 op-6 mg-0">
+                Record your experiment setup, observations, and conclusions.
+            </p>
+        </div>
+
+        @* Note editor *@
+        <div class="pd bd bg-card corner-2 clip">
+            <label class="fsz-12">Experiment title</label>
+            <input class="bd corner-2 pd wf mgt-2 mgb-10" placeholder="e.g. Projectile launched at 45 degrees"
+                   maxlength="200" @bind="notesTitle" />
+
+            <label class="fsz-12">
+                @(isEditingSavedNotes ? "Edit saved observations and conclusions"
+                                      : "Add observations and conclusions")
+            </label>
+
+            <textarea class="bd corner-2 pd wf mgt-2" rows="8" maxlength="20000"
+                      placeholder="Record what you observed during the simulation..." @bind="simulationNotes"></textarea>
+
+            <div class="flex flex-spacebetween flex-center mgt-2">
+                <span class="fsz-12 op-6">
+                    @simulationNotes.Length characters
+                </span>
+
+                <div class="flex">
+                    <button class="bd corner-2 pd bg-primary-01 mgr-1" style="cursor: pointer;" @onclick="ClearNotes">
+                        Clear input
+                    </button>
+
+                    <button class="bd corner-2 pd bg-primary" style="cursor: pointer;" @onclick="SaveNotesAsync"
+                            disabled="@(isSavingNotes || isDeletingNotes)">
+                        @(isSavingNotes ? "Saving..." : "Save Notes")
+                    </button>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(notesStatus))
+            {
+                <p class="fsz-12 mgt-2 @(notesSaved ? "cl-success" : "cl-fatal")" role="status">
+                    @notesStatus
+                </p>
+            }
+
+            <p class="fsz-12 op-6 mgt-2">
+                Save your notes to keep them in the database for this simulation.
+            </p>
+        </div>
+
+        @* Saved note display *@
+        <div class="mgt-10">
+            <h3 class="mg-0 pdb-2 fsz-16">Saved Notes</h3>
+
+            @if (string.IsNullOrWhiteSpace(savedNotesTitle)
+                && string.IsNullOrWhiteSpace(savedNotesContent))
+            {
+                <div class="bg-card corner-2">
+                    <p class="mg-0 fsz-12 op-6">
+                        No saved notes yet. Your saved note will appear here.
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="pd bd bg-card corner-2">
+                    <div class="flex flex-spacebetween flex-center mgb-2">
+                        <h4 class="mg-0 cl-primary">
+                            @(string.IsNullOrWhiteSpace(savedNotesTitle)
+                                ? "Untitled Note"
+                                : savedNotesTitle)
+                        </h4>
+
+                        <div class="flex flex-center" style="gap: 6px;">
+                            <button class="bd corner-2 pd bg-primary-01 mdi mdi-pencil fsz-20 fw-bold"
+                                    style="cursor: pointer;" title="Edit saved note" aria-label="Edit saved note"
+                                    @onclick="EditSavedNotes">
+                                <icon name="pencil" size="16" />
+                            </button>
+
+                            <button class="bd corner-2 pd bg-error mdi mdi-delete fsz-20 fw-bold" title="Delete saved note"
+                                    style="cursor: pointer;" aria-label="Delete saved note" @onclick="DeleteSavedNotesAsync"
+                                    disabled="@isSavingNotes">
+                                <icon name="trash-2" size="16" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="fsz-12 op-6 mgb-2">
+                        Projectile Motion Experiment
+                    </p>
+
+                    <div class="flex flex-start pd">
+                        <div class="flex flex-center">
+                            <i class="mdi mdi-pen-plus fsz-20 cl-primary mgr-5"></i>
+                            <div style="white-space: pre-wrap; overflow-wrap: anywhere; max-height: 70vh;" class="scroll-y">
+                                @savedNotesContent
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+
+    <div style="display: @(isExport ? "block" : "none");">
+
+        <div class="mgb-10">
+            <h3 class="mg-0 pdb-2 fsz-16">Export Simulation</h3>
+            <p class="fsz-12 op-6 mg-0">
+                Download your numerical results and experiment notes.
+            </p>
+        </div>
+
+        <div class="grid gap-1 colm-2 mgb-10">
+            <div class="pd bd bg-card corner-2">
+                <h4 class="mg-0 pdb-2 cl-primary">Trajectory data</h4>
+                <p class="fsz-12 op-6">
+                    Export time, position, horizontal velocity, vertical
+                    velocity, and speed for every trajectory point.
+                </p>
+                <p class="fsz-12 cl-success mgt-2">
+                    Available rows: <strong>@trajectory.Count</strong>
+                </p>
+                <button class="bd corner-2 pd bg-primary-01 wf mgt-3" disabled="@isExportingCsv"
+                        style="cursor: pointer;" @onclick="ExportCsvAsync">
+                    @(isExportingCsv ? "Preparing CSV..." : "Download CSV")
+                </button>
+            </div>
+
+            <div class="pd bd bg-card corner-2">
+                <h4 class="mg-0 pdb-2 cl-primary">Experiment notes</h4>
+                <p class="fsz-12 op-6">
+                    Export your experiment title and written observations
+                    as a plain-text file.
+                </p>
+                <p class="fsz-12 cl-success mgt-2">
+                    Notes: <strong>@savedNotesContent.Length characters</strong>
+                </p>
+                <button class="bd corner-2 pd bg-primary-01 wf mgt-3" disabled="@isExportingNotes"
+                        style="cursor: pointer;" @onclick="ExportNotesAsync">
+                    @(isExportingNotes ? "Preparing notes..." : "Download notes")
+                </button>
+            </div>
+            
+            <div class="pd bd bg-card corner-2">
+                <h4 class="mg-0 pdb-2 cl-primary">Graph images</h4>
+
+                <p class="fsz-12 op-6">
+                    Export high-resolution PNG images of your projectile analysis graphs.
+                </p>
+
+                <button class="bd corner-2 pd bg-primary-01 wf mgt-3" disabled="@isExportingGraphs"
+                        style="cursor: pointer;" @onclick="ExportAllGraphsPngAsync">
+                    @(isExportingGraphs ? "Preparing PNG..." : "Download simulation PNG")
+                </button>
+            </div>
+
+            <div class="pd bd bg-card corner-2">
+                <h4 class="mg-0 pdb-2 cl-primary">Complete PDF report</h4>
+                <p class="fsz-12 op-6">
+                    Export parameters, calculated results, all trajectory rows,
+                    saved notes, and all four analysis graphs.
+                </p>
+
+                <button class="bd corner-2 pd bg-primary-01 wf mgt-3" disabled="@isExportingPdf"
+                        style="cursor: pointer;" @onclick="ExportPdfAsync">
+                    @(isExportingPdf ? "Preparing PDF..." : "Download complete PDF")
+                </button>
+            </div>
+
+
+            <div class="pd bd bg-card corner-2">
+                <h4 class="mg-0 pdb-2 cl-primary">Word document</h4>
+
+                <p class="fsz-12 op-6">
+                    Export an editable report containing simulation
+                    parameters, all four graphs, complete trajectory
+                    data, and saved observations.
+                </p>
+
+                <button class="bd corner-2 pd bg-primary-01 wf mgt-3" disabled="@isExportingDocx"
+                        style="cursor: pointer;" @onclick="ExportDocxAsync">
+                    @(isExportingDocx
+                        ? "Preparing DOCX..."
+                        : "Download complete DOCX")
+                </button>
+            </div>
+        </div>
+
+        @if (trajectory.Count == 0)
+        {
+            <div class="pd bd corner-2 bg-card">
+                <p class="mg-0 fsz-12 op-6">
+                    Run a simulation first to enable trajectory CSV export.
+                </p>
+            </div>
+        }
+    </div>
+</div>
+
+@if (showDeleteNotesDialog)
+{
+    <ConfirmDialog TitleStart="Delete" TitleAction="1" TitleEnd="saved note?"
+                   SubTitle="This will permanently delete the note, but your simulation and physics results will remain."
+                   ConfirmButtonAble="@isDeletingNotes" CancelButtonAble="@isDeletingNotes"
+                   ConfirmButtonProcess="@(isDeletingNotes ? "Deleting..." : "Delete Note")" OnConfirm="ConfirmDeleteSavedNotesAsync"
+                   OnCancel="CancelDeleteSavedNotes" />
+}
+
+@if (!string.IsNullOrWhiteSpace(pngExportError))
+{
+    <div class="bd corner-2 pd mgt-3" style="border: 1px solid #dc2626; background: #fff1f2; color: #7f1d1d;">
+        <strong>Export error</strong>
+
+        <pre style="white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px;">@pngExportError</pre>
+    </div>
+}
+@code {
+    private string tableSearch = "";
+    private int tablePage = 1;
+    private int pageSize = 10;
+
+    [SupplyParameterFromQuery(Name = "id")]
+    public Guid? SimulationIdFromQuery { get; set; }
+
+    private Guid? loadedSimulationId;
+    private bool isLoadedFromHistory = false;
+
+    private bool isRunning = false;
+    private bool isPlaying = false;
+    private bool hasSimulationStarted = false;
+
+    private bool parametersLocked => hasSimulationStarted || isRunning || isPlaying;
+
+    private bool isSimulation = true;
+    private bool isGraph = false;
+    private bool isDataTable = false;
+    private bool isNotes = false;
+    private bool isExport = false;
+
+    private string notesTitle = "";
+    private string simulationNotes = "";
+    private string savedNotesTitle = "";
+    private string savedNotesContent = "";
+    private bool isEditingSavedNotes = false;
+    private bool showDeleteNotesDialog = false;
+    private bool confirmBeforeDeleting = true;
+
+    private Guid? currentSimulationId;
+    private string simulationName = "";
+    private string moduleId = "projectile";
+    private bool isSavingNotes;
+    private bool isDeletingNotes = false;
+    private string? notesStatus;
+    private bool notesSaved;
+
+    private bool runSimulation = false;
+
+    private double initialVelocity = 30;
+    private double launchAngle = 45;
+    private double gravity = 9.81;
+
+    private double rangeResult;
+    private double maximumHeightResult;
+    private double timeOfFlightResult;
+    private double finalSpeedResult;
+
+    private string? errorMessage;
+    private string? successMessage;
+
+    private bool showMoreOptions = false;
+
+    private double initialHeight = 0;
+    private double timeStep = 0.05;
+
+    private double defaultGravity = 9.81;
+    private double defaultTimeStep = 0.05;
+    private double maximumSimulationTime = 100;
+    private int maximumDataPoints = 10000;
+
+    private ProjectileAnalysisGraph? positionGraph;
+    private ProjectileAnalysisGraph? velocityGraph;
+    private ProjectileAnalysisGraph? energyGraph;
+    private ProjectileAnalysisGraph? displacementGraph;
+
+    private bool isExportingCsv;
+    private bool isExportingNotes;
+    private bool isExportingGraphs;
+    private bool isExportingPdf;
+    private bool isExportingDocx;
+
+    private void ToggleMoreOptions()
+    {
+        showMoreOptions = !showMoreOptions;
+    }
+
+    private readonly List<ProjectileTrajectoryPoint> trajectory = new();
+    private readonly List<string> consoleLines = new();
+
+    private int currentPointIndex;
+    private int playbackDelayMs = 60;
+    private CancellationTokenSource? playbackCancellation;
+
+    private double playbackProgress =>
+        trajectory.Count <= 1
+            ? 0
+            : currentPointIndex * 100.0 / (trajectory.Count - 1);
+
+    private double CurrentTime =>
+        trajectory.Count == 0
+            ? 0
+            : trajectory[Math.Clamp(currentPointIndex, 0, trajectory.Count - 1)].Time;
+
+    private int CurrentFrame =>
+        trajectory.Count == 0 ? 0 : currentPointIndex + 1;
+
+    
+    
+    private void IsSimulation()
+    {
+        isSimulation = true;
+        isGraph = false;
+        isDataTable = false;
+        isNotes = false;
+        isExport = false;
+    }
+
+    private void IsGraph()
+    {
+        isSimulation = false;
+        isGraph = true;
+        isDataTable = false;
+        isNotes = false;
+        isExport = false;
+    }
+
+    private void IsDataTable()
+    {
+        isSimulation = false;
+        isGraph = false;
+        isDataTable = true;
+        isNotes = false;
+        isExport = false;
+    }
+
+    private void IsNotes()
+    {
+        isSimulation = false;
+        isGraph = false;
+        isDataTable = false;
+        isNotes = true;
+        isExport = false;
+    }
+
+    private void IsExport()
+    {
+        isSimulation = false;
+        isGraph = false;
+        isDataTable = false;
+        isNotes = false;
+        isExport = true;
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDeleteConfirmationSettingAsync();
+        await LoadSimulationSettingsAsync();
+    }
+
+    private async Task LoadDeleteConfirmationSettingAsync()
+    {
+        try
+        {
+            var settings = await Http.GetFromJsonAsync<GeneralSettingsResponse>(
+                "/api/settings/general/");
+
+            if (settings is not null)
+            {
+                confirmBeforeDeleting = settings.ConfirmBeforeDeleting;
+            }
+        }
+        catch (HttpRequestException)
+        {
+            // Keep confirmation enabled if the setting cannot be loaded.
+        }
+        catch (JsonException)
+        {
+            // Keep confirmation enabled if the response cannot be read.
+        }
+    }
+
+
+    private async Task LoadSimulationSettingsAsync()
+    {
+        try
+        {
+            var settings = await Http.GetFromJsonAsync<SimulationSettingsResponse>(
+                "/api/settings/simulation/");
+
+            if (settings is null)
+                return;
+
+            defaultGravity = settings.Gravity;
+            defaultTimeStep = settings.DefaultTimeStep;
+            maximumSimulationTime = settings.MaximumSimulationTime;
+            maximumDataPoints = settings.MaximumDataPoints;
+
+            // Apply saved defaults only when the workspace has no
+            // simulation loaded from history.
+            if (!isLoadedFromHistory && !hasSimulationStarted)
+            {
+                gravity = defaultGravity;
+                timeStep = defaultTimeStep;
+            }
+        }
+        catch (HttpRequestException)
+        {
+            // Keep the existing defaults if the API is unavailable.
+        }
+        catch (JsonException)
+        {
+            // Keep the existing defaults if the response cannot be read.
+        }
+    }
+
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SimulationIdFromQuery is not Guid id)
+            return;
+
+        if (loadedSimulationId == id)
+            return;
+
+        await LoadSavedSimulationAsync(id);
+    }
+
+    private async Task LoadSavedSimulationAsync(Guid id)
+    {
+        PausePlayback();
+
+        isRunning = true;
+        errorMessage = null;
+        successMessage = null;
+        notesStatus = null;
+        notesSaved = false;
+
+        trajectory.Clear();
+        consoleLines.Clear();
+        currentPointIndex = 0;
+        tablePage = 1;
+        tableSearch = "";
+
+        try
+        {
+            var saved = await Http.GetFromJsonAsync<SavedSimulationDetails>(
+                $"/api/simulations/projectile/history/{id}");
+
+            if (saved is null || saved.SimulationId != id)
+            {
+                errorMessage = "The saved simulation could not be found.";
+                return;
+            }
+
+            // Restore the saved parameters.
+            simulationName = saved.Name;
+            moduleId = saved.ModuleId;
+            initialVelocity = saved.InitialVelocity;
+            launchAngle = saved.LaunchAngle;
+            gravity = saved.Gravity;
+            initialHeight = saved.InitialHeight;
+            timeStep = saved.TimeStep;
+
+            // Restore the original stored summary results.
+            rangeResult = saved.Range;
+            maximumHeightResult = saved.MaximumHeight;
+            timeOfFlightResult = saved.TimeOfFlight;
+            finalSpeedResult = saved.FinalSpeed;
+
+            // Restore the saved record ID and its notes.
+            currentSimulationId = saved.SimulationId;
+            isLoadedFromHistory = true;
+
+            savedNotesTitle = saved.NotesTitle ?? "";
+            savedNotesContent = saved.SimulationNotes ?? "";
+
+            notesTitle = "";
+            simulationNotes = "";
+            isEditingSavedNotes = false;
+
+            // Keep the controls in the same locked state as a completed run.
+            hasSimulationStarted = true;
+            runSimulation = true;
+            IsSimulation();
+
+            consoleLines.Add(
+                $"[{DateTime.Now:HH:mm:ss}] Loading saved projectile simulation.");
+            consoleLines.Add($"Simulation ID: {saved.SimulationId}");
+            consoleLines.Add($"Original saved date (UTC): {saved.CreatedAtUtc:O}");
+
+            // Recalculate the trajectory without creating another history record.
+            var request = new
+            {
+                initialVelocity = saved.InitialVelocity,
+                launchAngle = saved.LaunchAngle,
+                gravity = saved.Gravity,
+                initialHeight = saved.InitialHeight,
+                timeStep = saved.TimeStep
+            };
+
+            using var response = await Http.PostAsJsonAsync(
+                "/api/simulations/projectile/trajectory",
+                request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage =
+                    $"The saved summary loaded, but trajectory calculation failed " +
+                    $"({(int)response.StatusCode}).";
+
+                consoleLines.Add(errorMessage);
+                return;
+            }
+
+            using var document = JsonDocument.Parse(
+                await response.Content.ReadAsStringAsync());
+
+            var result = document.RootElement;
+
+            if (result.TryGetProperty("trajectory", out var points)
+                && points.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var point in points.EnumerateArray())
+                {
+                    trajectory.Add(new ProjectileTrajectoryPoint
+                    {
+                        Time = ReadNumber(point, "time"),
+                        X = ReadNumber(point, "x"),
+                        Y = ReadNumber(point, "y"),
+                        HorizontalVelocity =
+                            ReadNumber(point, "horizontalVelocity"),
+                        VerticalVelocity =
+                            ReadNumber(point, "verticalVelocity"),
+                        Speed = ReadNumber(point, "speed")
+                    });
+                }
+            }
+
+            if (trajectory.Count == 0)
+            {
+                errorMessage =
+                    "The saved summary loaded, but no trajectory points were returned.";
+                consoleLines.Add(errorMessage);
+                return;
+            }
+
+            consoleLines.Add($"Range: {rangeResult:F2} m");
+            consoleLines.Add($"Maximum height: {maximumHeightResult:F2} m");
+            consoleLines.Add($"Time of flight: {timeOfFlightResult:F2} s");
+            consoleLines.Add($"Final speed: {finalSpeedResult:F2} m/s");
+            consoleLines.Add($"Trajectory points restored: {trajectory.Count}");
+
+            currentPointIndex = 0;
+            loadedSimulationId = id;
+
+            successMessage = "Saved simulation loaded successfully.";
+            consoleLines.Add("Ready to inspect, replay, and export this simulation.");
+
+            // Start the animation using the restored trajectory.
+            PlayPlayback();
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage =
+                "Could not connect to the PSS backend while loading this simulation.";
+            consoleLines.Add($"ERROR: {errorMessage}");
+        }
+        catch (JsonException)
+        {
+            errorMessage =
+                "The saved simulation response could not be read.";
+            consoleLines.Add($"ERROR: {errorMessage}");
+        }
+        finally
+        {
+            isRunning = false;
+        }
+    }
+
+
+    private string? ValidateSimulationParameters()
+    {
+        if (!double.IsFinite(initialVelocity) || initialVelocity <= 0)
+            return "Initial velocity must be a finite value greater than zero.";
+
+        if (!double.IsFinite(launchAngle) ||
+            launchAngle < 0 || launchAngle > 90)
+            return "Launch angle must be between 0 and 90 degrees.";
+
+        if (!double.IsFinite(gravity) || gravity <= 0)
+            return "Gravity must be a finite value greater than zero.";
+
+        if (!double.IsFinite(initialHeight) || initialHeight < 0)
+            return "Initial height must be a finite value greater than or equal to zero.";
+
+        if (!double.IsFinite(timeStep) || timeStep <= 0)
+            return "Time step must be a finite value greater than zero.";
+
+        var angleRadians = launchAngle * Math.PI / 180.0;
+        var verticalVelocity = initialVelocity * Math.Sin(angleRadians);
+
+        var discriminant =
+            verticalVelocity * verticalVelocity +
+            2 * gravity * initialHeight;
+
+        if (!double.IsFinite(discriminant) || discriminant < 0)
+            return "The selected parameters produce an invalid trajectory.";
+
+        var timeOfFlight =
+            (verticalVelocity + Math.Sqrt(discriminant)) / gravity;
+
+        if (!double.IsFinite(timeOfFlight) || timeOfFlight < 0)
+            return "The calculated flight time is invalid.";
+
+        if (timeOfFlight > maximumSimulationTime)
+        {
+            return $"Flight time ({timeOfFlight:F2} s) exceeds the configured " +
+                   $"maximum simulation time ({maximumSimulationTime:F2} s).";
+        }
+
+        var requiredSteps = Math.Ceiling(timeOfFlight / timeStep);
+
+        if (!double.IsFinite(requiredSteps) ||
+            requiredSteps + 1 > maximumDataPoints)
+        {
+            return $"This simulation would exceed the configured maximum of " +
+                   $"{maximumDataPoints:N0} trajectory points. Increase the time step.";
+        }
+
+        return null;
+    }
+
+
+    private async Task RunSimulation()
+    {
+        
+        if (parametersLocked)
+            return;
+
+        if (string.IsNullOrWhiteSpace(simulationName))
+        {
+            errorMessage = "Please enter a simulation name before running.";
+            successMessage = null;
+            return;
+        }
+
+        var validationError = ValidateSimulationParameters();
+
+        if (validationError is not null)
+        {
+            errorMessage = validationError;
+            successMessage = null;
+            return;
+        }
+
+        simulationName = simulationName.Trim();
+
+        PausePlayback();
+
+        hasSimulationStarted = true;
+        isRunning = true;
+        runSimulation = true;
+        errorMessage = null;
+        successMessage = null;
+        currentSimulationId = null;
+        isLoadedFromHistory = false;
+
+        trajectory.Clear();
+        consoleLines.Clear();
+        currentPointIndex = 0;
+
+        consoleLines.Add($"[{DateTime.Now:HH:mm:ss}] Starting projectile simulation.");
+        consoleLines.Add($"Initial velocity: {initialVelocity:F2} m/s");
+        consoleLines.Add($"Launch angle: {launchAngle:F2} degrees");
+        consoleLines.Add($"Gravity: {gravity:F2} m/s²");
+
+        try
+        {
+            
+            var request = new RunProjectileSimulationRequest
+            {
+                Name = string.IsNullOrWhiteSpace(simulationName)
+                    ? "Projectile Motion"
+                    : simulationName.Trim(),
+
+                ModuleId = moduleId,
+
+                InitialVelocity = initialVelocity,
+                LaunchAngle = launchAngle,
+                Gravity = gravity,
+                InitialHeight = initialHeight,
+                TimeStep = timeStep
+            };
+
+            using var response = await Http.PostAsJsonAsync(
+                "/api/simulations/projectile/run",
+                request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var details = await response.Content.ReadAsStringAsync();
+
+                errorMessage =
+                    $"Simulation failed ({(int)response.StatusCode}). {details}";
+
+                consoleLines.Add($"ERROR: {errorMessage}");
+                return;
+            }
+
+            using var document = JsonDocument.Parse(
+                await response.Content.ReadAsStringAsync());
+
+            var result = document.RootElement;
+
+            // Capture the database ID returned by the backend.
+            // A null ID is expected when Auto Save Results is disabled.
+            if (result.TryGetProperty("simulationId", out var idElement)
+                && idElement.ValueKind == JsonValueKind.String
+                && Guid.TryParse(idElement.GetString(), out var simulationId))
+            {
+                currentSimulationId = simulationId;
+                consoleLines.Add("Simulation saved to History.");
+            }
+            else
+            {
+                currentSimulationId = null;
+                consoleLines.Add(
+                    "Auto Save Results is off, or no saved simulation ID was returned. " +
+                    "The results can still be viewed and exported.");
+            }
+
+            rangeResult = ReadNumber(result, "range");
+            maximumHeightResult = ReadNumber(result, "maximumHeight");
+            timeOfFlightResult = ReadNumber(result, "timeOfFlight");
+            finalSpeedResult = ReadNumber(result, "finalSpeed");
+
+            if (result.TryGetProperty("trajectory", out var points)
+                && points.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var point in points.EnumerateArray())
+                {
+                    trajectory.Add(new ProjectileTrajectoryPoint
+                    {
+                        Time = ReadNumber(point, "time"),
+                        X = ReadNumber(point, "x"),
+                        Y = ReadNumber(point, "y"),
+                        HorizontalVelocity = ReadNumber(point, "horizontalVelocity"),
+                        VerticalVelocity = ReadNumber(point, "verticalVelocity"),
+                        Speed = ReadNumber(point, "speed")
+                    });
+                }
+            }
+
+            consoleLines.Add($"Range: {rangeResult:F2} m");
+            consoleLines.Add($"Maximum height: {maximumHeightResult:F2} m");
+            consoleLines.Add($"Time of flight: {timeOfFlightResult:F2} s");
+            consoleLines.Add($"Final speed: {finalSpeedResult:F2} m/s");
+            consoleLines.Add($"Trajectory points received: {trajectory.Count}");
+
+            if (trajectory.Count == 0)
+            {
+                errorMessage = "The simulation completed, but no trajectory points were returned.";
+                consoleLines.Add($"ERROR: {errorMessage}");
+                return;
+            }
+
+            successMessage = null;
+            consoleLines.Add("Simulation results loaded. Playback started.");
+
+            currentPointIndex = 0;
+            PlayPlayback();
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not reach the PSS backend. Check that the API is running on port 5004.";
+            consoleLines.Add($"ERROR: {errorMessage}");
+        }
+        catch (JsonException)
+        {
+            errorMessage = "The backend response could not be read. Please check the API response format.";
+            consoleLines.Add($"ERROR: {errorMessage}");
+        }
+        finally
+        {
+            isRunning = false;
+        }
+    }
+
+    private void ResetSimulation()
+    {
+        PausePlayback();
+
+        hasSimulationStarted = false;
+        isRunning = false;
+
+        initialVelocity = 30;
+        launchAngle = 45;
+        gravity = defaultGravity;
+        initialHeight = 0;
+        timeStep = defaultTimeStep;
+
+        showMoreOptions = false;
+        runSimulation = false;
+
+        rangeResult = 0;
+        maximumHeightResult = 0;
+        timeOfFlightResult = 0;
+        finalSpeedResult = 0;
+
+        trajectory.Clear();
+        consoleLines.Clear();
+        currentPointIndex = 0;
+
+        // Reset notes for a fresh simulation.
+        ClearNotes();
+
+        savedNotesTitle = "";
+        savedNotesContent = "";
+
+        showDeleteNotesDialog = false;
+
+        // Prevent notes from being associated with the previous simulation.
+        currentSimulationId = null;
+
+        errorMessage = null;
+        successMessage = null;
+    }
+
+    private static double ReadNumber(
+        JsonElement result,
+        params string[] propertyNames)
+    {
+        if (result.ValueKind != JsonValueKind.Object)
+            return 0;
+
+        foreach (var property in result.EnumerateObject())
+        {
+            foreach (var name in propertyNames)
+            {
+                if (string.Equals(
+                        property.Name,
+                        name,
+                        StringComparison.OrdinalIgnoreCase)
+                    && property.Value.ValueKind == JsonValueKind.Number)
+                {
+                    return property.Value.GetDouble();
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private void PlayPlayback()
+    {
+        if (trajectory.Count == 0)
+            return;
+
+        if (currentPointIndex >= trajectory.Count - 1)
+            currentPointIndex = 0;
+
+        playbackCancellation?.Cancel();
+        playbackCancellation?.Dispose();
+
+        playbackCancellation = new CancellationTokenSource();
+        successMessage = null;
+        isPlaying = true;
+
+        _ = PlaybackLoopAsync(playbackCancellation.Token);
+    }
+
+    private async Task PlaybackLoopAsync(CancellationToken token)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested)
+            {
+                await Task.Delay(playbackDelayMs, token);
+
+                await InvokeAsync(() =>
+                {
+                    if (token.IsCancellationRequested || !isPlaying)
+                        return;
+
+                    if (currentPointIndex < trajectory.Count - 1)
+                    {
+                        currentPointIndex++;
+                    }
+
+                    if (currentPointIndex >= trajectory.Count - 1)
+                    {
+                        isPlaying = false;
+                        successMessage = "Simulation completed successfully.";
+                        consoleLines.Add("Playback completed successfully.");
+                    }
+
+                    StateHasChanged();
+                });
+
+                if (!isPlaying)
+                    break;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when playback is paused, reset, or restarted.
+        }
+    }
+
+    private void PausePlayback()
+    {
+        isPlaying = false;
+        playbackCancellation?.Cancel();
+    }
+
+    private void ResetPlayback()
+    {
+        PausePlayback();
+        currentPointIndex = 0;
+    }
+
+    private void StepBackward()
+    {
+        PausePlayback();
+
+        if (trajectory.Count > 0)
+            currentPointIndex = Math.Max(0, currentPointIndex - 1);
+    }
+
+    private void StepForward()
+    {
+        PausePlayback();
+
+        if (trajectory.Count > 0)
+            currentPointIndex = Math.Min(
+                trajectory.Count - 1,
+                currentPointIndex + 1);
+    }
+
+    public void Dispose()
+    {
+        isPlaying = false;
+        playbackCancellation?.Cancel();
+        playbackCancellation?.Dispose();
+    }
+
+    private List<ProjectileTrajectoryPoint> FilteredTrajectory
+    {
+        get
+        {
+            IEnumerable<ProjectileTrajectoryPoint> query = trajectory;
+
+            if (!string.IsNullOrWhiteSpace(tableSearch))
+            {
+                var term = tableSearch.Trim();
+
+                query = query.Where(p =>
+                    p.Time.ToString("F3").Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    p.X.ToString("F3").Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    p.Y.ToString("F3").Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    p.HorizontalVelocity.ToString("F3").Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    p.VerticalVelocity.ToString("F3").Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    p.Speed.ToString("F3").Contains(term, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return query.ToList();
+        }
+    }
+
+    private int TablePageCount =>
+        Math.Max(1, (int)Math.Ceiling(FilteredTrajectory.Count / (double)pageSize));
+
+    private IEnumerable<ProjectileTrajectoryPoint> PagedTrajectory =>
+    FilteredTrajectory
+        .Skip((tablePage - 1) * pageSize)
+        .Take(pageSize);
+
+    private void ResetTablePage()
+    {
+        tablePage = 1;
+    }
+
+    private void PreviousTablePage()
+    {
+        if (tablePage > 0)
+            tablePage--;
+    }
+
+    private void NextTablePage()
+    {
+        if (tablePage < TablePageCount - 1)
+            tablePage++;
+    }
+
+    private Task HandleTrajectoryPageChanged(int page)
+    {
+        tablePage = page;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleTrajectoryPageSizeChanged(int newPageSize)
+    {
+        pageSize = newPageSize;
+        tablePage = 1;
+        return Task.CompletedTask;
+    }
+
+    
+    private void ClearNotes()
+    {
+        notesTitle = "";
+        simulationNotes = "";
+        isEditingSavedNotes = false;
+        notesSaved = false;
+        notesStatus = null;
+    }
+
+    private void EditSavedNotes()
+    {
+        notesTitle = savedNotesTitle;
+        simulationNotes = savedNotesContent;
+        isEditingSavedNotes = true;
+        notesSaved = false;
+        notesStatus = null;
+    }
+
+    private async Task SaveNotesAsync()
+    {
+        if (currentSimulationId is null)
+        {
+            notesStatus = "Run a simulation first before saving notes.";
+            notesSaved = false;
+            return;
+        }
+
+        var titleToSave = !string.IsNullOrWhiteSpace(notesTitle)
+            ? notesTitle.Trim()
+            : savedNotesTitle;
+
+        string contentToSave;
+
+        if (isEditingSavedNotes)
+        {
+            // Editing replaces the saved version with the edited version.
+            contentToSave = simulationNotes.Trim();
+        }
+        else if (string.IsNullOrWhiteSpace(simulationNotes))
+        {
+            notesStatus = "Enter some notes before saving.";
+            notesSaved = false;
+            return;
+        }
+        else if (string.IsNullOrWhiteSpace(savedNotesContent))
+        {
+            // First note for this simulation.
+            contentToSave = simulationNotes.Trim();
+        }
+        else
+        {
+            // A new entry is appended to the existing saved note.
+            contentToSave = savedNotesContent.TrimEnd()
+                + Environment.NewLine
+                + Environment.NewLine
+                + simulationNotes.Trim();
+        }
+
+        if (titleToSave.Length > 200)
+        {
+            notesStatus = "The title cannot exceed 200 characters.";
+            notesSaved = false;
+            return;
+        }
+
+        if (contentToSave.Length > 20000)
+        {
+            notesStatus = "Combined notes cannot exceed 20,000 characters.";
+            notesSaved = false;
+            return;
+        }
+
+        isSavingNotes = true;
+        notesStatus = null;
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync(
+                $"/api/simulations/projectile/history/{currentSimulationId}/notes",
+                new
+                {
+                    NotesTitle = titleToSave,
+                    SimulationNotes = contentToSave
+                });
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Update the displayed note only after the backend saves it.
+                savedNotesTitle = titleToSave;
+                savedNotesContent = contentToSave;
+
+                // Clear the input after a successful save.
+                notesTitle = "";
+                simulationNotes = "";
+                isEditingSavedNotes = false;
+
+                notesSaved = true;
+                notesStatus = "Notes saved successfully.";
+            }
+            else
+            {
+                notesSaved = false;
+                notesStatus =
+                    $"Could not save notes. Server returned {(int)response.StatusCode}.";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            notesSaved = false;
+            notesStatus = "Could not connect to the PSS backend. Please try again.";
+        }
+        finally
+        {
+            isSavingNotes = false;
+        }
+    }
+
+
+    private async Task DeleteSavedNotesAsync()
+    {
+        if (isDeletingNotes || isSavingNotes)
+            return;
+
+        if (string.IsNullOrWhiteSpace(savedNotesTitle)
+            && string.IsNullOrWhiteSpace(savedNotesContent))
+        {
+            notesSaved = false;
+            notesStatus = "There are no saved notes to delete.";
+            return;
+        }
+
+        if (confirmBeforeDeleting)
+        {
+            showDeleteNotesDialog = true;
+            return;
+        }
+
+        // Delete directly without displaying the confirmation dialog.
+        showDeleteNotesDialog = false;
+        await ConfirmDeleteSavedNotesAsync();
+    }
+
+    private void CancelDeleteSavedNotes()
+    {
+        if (isDeletingNotes)
+            return;
+
+        showDeleteNotesDialog = false;
+    }
+
+    private async Task ConfirmDeleteSavedNotesAsync()
+    {
+        if (isDeletingNotes)
+            return;
+
+        if (currentSimulationId is null)
+        {
+            notesSaved = false;
+            notesStatus = "Open a saved simulation before deleting its notes.";
+            showDeleteNotesDialog = false;
+            return;
+        }
+
+        isDeletingNotes = true;
+        notesStatus = null;
+
+        try
+        {
+            var response = await Http.DeleteAsync(
+                $"/api/simulations/projectile/history/{currentSimulationId}/notes");
+
+            if (response.IsSuccessStatusCode)
+            {
+                savedNotesTitle = "";
+                savedNotesContent = "";
+
+                notesTitle = "";
+                simulationNotes = "";
+                isEditingSavedNotes = false;
+
+                notesSaved = true;
+                notesStatus = "Note deleted successfully.";
+
+                showDeleteNotesDialog = false;
+            }
+            else
+            {
+                var errorDetails = await response.Content.ReadAsStringAsync();
+
+                notesSaved = false;
+                notesStatus =
+                    $"Could not delete the note. Server returned " +
+                    $"{(int)response.StatusCode}. {errorDetails}";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            notesSaved = false;
+            notesStatus =
+                "Could not connect to the PSS backend. Please try again.";
+        }
+        finally
+        {
+            isDeletingNotes = false;
+        }
+    }
+
+    
+
+    private async Task ExportCsvAsync()
+    {
+        if (trajectory.Count == 0 ||
+            isExportingCsv || isExportingNotes ||
+            isExportingGraphs || isExportingPdf || isExportingDocx)
+            return;
+
+        isExportingCsv = true;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(500);
+
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+
+            var csv = new StringBuilder();
+
+            string F(double value) =>
+                value.ToString("F3", CultureInfo.InvariantCulture);
+
+            csv.AppendLine("PSS - Physics Simulation Studio");
+            csv.AppendLine("Simulation Metadata");
+            csv.AppendLine($"Simulation Name,{CsvEscape(simulationName)}");
+            csv.AppendLine($"Simulation ID,{CsvEscape(currentSimulationId?.ToString() ?? "Not available")}");
+            csv.AppendLine($"Module,{CsvEscape(moduleId)}");
+            csv.AppendLine($"Exported At,{CsvEscape(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture))}");
+            csv.AppendLine($"Initial Velocity (m/s),{F(initialVelocity)}");
+            csv.AppendLine($"Launch Angle (degrees),{F(launchAngle)}");
+            csv.AppendLine($"Gravity (m/s²),{F(gravity)}");
+            csv.AppendLine($"Initial Height (m),{F(initialHeight)}");
+            csv.AppendLine($"Time Step (s),{F(timeStep)}");
+            csv.AppendLine($"Range (m),{F(rangeResult)}");
+            csv.AppendLine($"Maximum Height (m),{F(maximumHeightResult)}");
+            csv.AppendLine($"Time of Flight (s),{F(timeOfFlightResult)}");
+            csv.AppendLine($"Final Speed (m/s),{F(finalSpeedResult)}");
+            csv.AppendLine($"Total Trajectory Points,{trajectory.Count}");
+
+            csv.AppendLine();
+            csv.AppendLine("Trajectory Data");
+            csv.AppendLine("Frame,Time (s),X (m),Y (m),Vx (m/s),Vy (m/s),Speed (m/s)");
+
+            for (int i = 0; i < trajectory.Count; i++)
+            {
+                var point = trajectory[i];
+
+                csv.Append(i + 1).Append(',');
+                csv.Append(F(point.Time)).Append(',');
+                csv.Append(F(point.X)).Append(',');
+                csv.Append(F(point.Y)).Append(',');
+                csv.Append(F(point.HorizontalVelocity)).Append(',');
+                csv.Append(F(point.VerticalVelocity)).Append(',');
+                csv.AppendLine(F(point.Speed));
+            }
+
+            await JS.InvokeVoidAsync(
+                "pssDownloadFile",
+                $"{MakeSafeFileName(simulationName)}.csv",
+                "text/csv;charset=utf-8",
+                csv.ToString());
+        }
+        catch (Exception ex)
+        {
+            pngExportError = $"CSV export failed: {ex.Message}";
+        }
+        finally
+        {
+            isExportingCsv = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private static string CsvEscape(string? value)
+    {
+        value ??= string.Empty;
+
+        return "\"" + value.Replace("\"", "\"\"") + "\"";
+    }
+
+
+    private async Task ExportNotesAsync()
+    {
+        if (isExportingCsv || isExportingNotes || isExportingGraphs || isExportingPdf || isExportingDocx)
+        {
+            return;
+        }
+
+        isExportingNotes = true;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(500);
+
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+
+            var title = string.IsNullOrWhiteSpace(savedNotesTitle)
+                ? "Untitled Note"
+                : savedNotesTitle.Trim();
+
+            var content = savedNotesContent ?? string.Empty;
+            var export = new StringBuilder();
+
+            export.AppendLine("PSS - Physics Simulation Studio");
+            export.AppendLine("Projectile Motion Experiment");
+            export.AppendLine(new string('=', 40));
+            export.AppendLine();
+            export.AppendLine($"Simulation: {simulationName}");
+            export.AppendLine($"Note title: {title}");
+            export.AppendLine($"Exported: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            export.AppendLine();
+            export.AppendLine("Simulation Parameters");
+            export.AppendLine("---------------------");
+            export.AppendLine(
+                $"Initial velocity: {initialVelocity.ToString("F2", CultureInfo.InvariantCulture)} m/s");
+            export.AppendLine(
+                $"Launch angle: {launchAngle.ToString("F2", CultureInfo.InvariantCulture)}°");
+            export.AppendLine(
+                $"Gravity: {gravity.ToString("F2", CultureInfo.InvariantCulture)} m/s²");
+            export.AppendLine();
+            export.AppendLine("Observations and Conclusions");
+            export.AppendLine("----------------------------");
+            export.AppendLine(content);
+
+            await JS.InvokeVoidAsync(
+                "pssDownloadFile",
+                $"{MakeSafeFileName(simulationName)}.txt",
+                "text/plain;charset=utf-8",
+                export.ToString());
+        }
+        catch (Exception ex)
+        {
+            pngExportError = $"Notes export failed: {ex.Message}";
+        }
+        finally
+        {
+            isExportingNotes = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    
+    private async Task ExportAllGraphsPngAsync()
+    {
+        if (trajectory.Count == 0 || isExportingCsv || isExportingNotes || isExportingGraphs || isExportingPdf ||
+isExportingDocx)
+            return;
+
+        isExportingGraphs = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            // Capture graphs without changing the selected tab.
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(700);
+
+            var graphs = new[]
+            {
+            new { Title = "Position vs Time", Chart = positionGraph },
+            new { Title = "Velocity vs Time", Chart = velocityGraph },
+            new { Title = "Energy vs Time", Chart = energyGraph },
+            new { Title = "Displacement vs Time", Chart = displacementGraph }
+        };
+
+            var graphImages = new List<GraphPngExport>();
+
+            foreach (var graph in graphs)
+            {
+                if (graph.Chart is null)
+                    throw new InvalidOperationException(
+                        $"{graph.Title} chart is not ready.");
+
+                var imageData = await graph.Chart.GetPngDataUriAsync();
+
+                if (string.IsNullOrWhiteSpace(imageData))
+                    throw new InvalidOperationException(
+                        $"Could not capture the {graph.Title} graph.");
+
+                graphImages.Add(new GraphPngExport
+                {
+                    Title = graph.Title,
+                    DataUri = imageData
+                });
+            }
+
+            var metadata = new PngExportMetadata
+            {
+                SimulationName = simulationName ?? string.Empty,
+                ExportedAt = DateTime.Now.ToString(
+                    "yyyy-MM-dd HH:mm:ss",
+                    CultureInfo.InvariantCulture),
+                InitialVelocity = initialVelocity,
+                LaunchAngle = launchAngle,
+                Gravity = gravity,
+                InitialHeight = initialHeight,
+                TimeStep = timeStep,
+                Range = rangeResult,
+                MaximumHeight = maximumHeightResult,
+                TimeOfFlight = timeOfFlightResult,
+                FinalSpeed = finalSpeedResult,
+                TrajectoryPoints = trajectory.Count
+            };
+
+            var projectFileName = MakeSafeFileName(simulationName);
+
+            await JS.InvokeVoidAsync(
+                "pssDownloadCombinedGraphsPng",
+                $"{projectFileName}.png",
+                graphImages,
+                metadata);
+        }
+        catch (Exception ex)
+        {
+            pngExportError = $"PNG export failed: {ex.Message}";
+            consoleLines.Add(pngExportError);
+        }
+        finally
+        {
+            isExportingGraphs = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+    private static string MakeSafeFileName(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+            title = "Untitled Simulation";
+
+        foreach (char invalidChar in Path.GetInvalidFileNameChars())
+        {
+            title = title.Replace(invalidChar, '-');
+        }
+
+        return title.Trim().TrimEnd('.');
+    }
+
+    
+    private async Task ExportPdfAsync()
+    {
+        if (trajectory.Count == 0 || isExportingCsv || isExportingNotes || isExportingGraphs || isExportingPdf ||
+isExportingDocx)
+            return;
+
+        isExportingPdf = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            // Allow the UI to update without changing the selected tab.
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(700);
+
+            var graphDefinitions = new[]
+            {
+            new { Title = "Position vs Time", Chart = positionGraph },
+            new { Title = "Velocity vs Time", Chart = velocityGraph },
+            new { Title = "Energy vs Time", Chart = energyGraph },
+            new { Title = "Displacement vs Time", Chart = displacementGraph }
+        };
+
+            var graphImages = new List<GraphPngExport>();
+
+            foreach (var graph in graphDefinitions)
+            {
+                if (graph.Chart is null)
+                    throw new InvalidOperationException(
+                        $"{graph.Title} graph is not ready.");
+
+                var dataUri = await graph.Chart.GetPngDataUriAsync();
+
+                if (string.IsNullOrWhiteSpace(dataUri))
+                    throw new InvalidOperationException(
+                        $"Could not capture {graph.Title}.");
+
+                graphImages.Add(new GraphPngExport
+                {
+                    Title = graph.Title,
+                    DataUri = dataUri
+                });
+            }
+
+            var metadata = new PngExportMetadata
+            {
+                SimulationName = simulationName ?? string.Empty,
+                ExportedAt = DateTime.Now.ToString(
+                    "yyyy-MM-dd HH:mm:ss",
+                    CultureInfo.InvariantCulture),
+                InitialVelocity = initialVelocity,
+                LaunchAngle = launchAngle,
+                Gravity = gravity,
+                InitialHeight = initialHeight,
+                TimeStep = timeStep,
+                Range = rangeResult,
+                MaximumHeight = maximumHeightResult,
+                TimeOfFlight = timeOfFlightResult,
+                FinalSpeed = finalSpeedResult,
+                TrajectoryPoints = trajectory.Count
+            };
+
+            // Include every trajectory row, not only the visible table page.
+            var rows = trajectory.Select((point, index) =>
+                new PdfTrajectoryRow
+                {
+                    Frame = index + 1,
+                    Time = point.Time,
+                    X = point.X,
+                    Y = point.Y,
+                    Vx = point.HorizontalVelocity,
+                    Vy = point.VerticalVelocity,
+                    Speed = point.Speed
+                }).ToArray();
+
+            var safeName = MakeSafeFileName(simulationName);
+
+            await JS.InvokeVoidAsync(
+                "pssDownloadCompleteSimulationPdf",
+                $"{safeName}.pdf",
+                metadata,
+                graphImages,
+                rows,
+                savedNotesTitle ?? string.Empty,
+                savedNotesContent ?? string.Empty);
+        }
+        catch (Exception ex)
+        {
+            pngExportError = $"PDF export failed: {ex.Message}";
+            consoleLines.Add(pngExportError);
+        }
+        finally
+        {
+            isExportingPdf = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+
+    private async Task ExportDocxAsync()
+    {
+        if (trajectory.Count == 0 ||
+            isExportingCsv ||
+            isExportingNotes ||
+            isExportingGraphs ||
+            isExportingPdf ||
+            isExportingDocx)
+        {
+            return;
+        }
+
+        isExportingDocx = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await Task.Delay(300);
+
+            var graphDefinitions = new[]
+            {
+            new { Title = "Position vs Time", Chart = positionGraph },
+            new { Title = "Velocity vs Time", Chart = velocityGraph },
+            new { Title = "Energy vs Time", Chart = energyGraph },
+            new { Title = "Displacement vs Time", Chart = displacementGraph }
+        };
+
+            var graphImages = new List<GraphPngExport>();
+
+            foreach (var graph in graphDefinitions)
+            {
+                if (graph.Chart is null)
+                {
+                    throw new InvalidOperationException(
+                        $"{graph.Title} graph is not ready.");
+                }
+
+                var dataUri = await graph.Chart.GetPngDataUriAsync();
+
+                if (string.IsNullOrWhiteSpace(dataUri))
+                {
+                    throw new InvalidOperationException(
+                        $"Could not capture {graph.Title}.");
+                }
+
+                graphImages.Add(new GraphPngExport
+                {
+                    Title = graph.Title,
+                    DataUri = dataUri
+                });
+            }
+
+            var metadata = new PngExportMetadata
+            {
+                SimulationName = simulationName ?? string.Empty,
+                ExportedAt = DateTime.Now.ToString(
+                    "yyyy-MM-dd HH:mm:ss",
+                    CultureInfo.InvariantCulture),
+                InitialVelocity = initialVelocity,
+                LaunchAngle = launchAngle,
+                Gravity = gravity,
+                InitialHeight = initialHeight,
+                TimeStep = timeStep,
+                Range = rangeResult,
+                MaximumHeight = maximumHeightResult,
+                TimeOfFlight = timeOfFlightResult,
+                FinalSpeed = finalSpeedResult,
+                TrajectoryPoints = trajectory.Count
+            };
+
+            var rows = trajectory.Select((point, index) =>
+                new PdfTrajectoryRow
+                {
+                    Frame = index + 1,
+                    Time = point.Time,
+                    X = point.X,
+                    Y = point.Y,
+                    Vx = point.HorizontalVelocity,
+                    Vy = point.VerticalVelocity,
+                    Speed = point.Speed
+                }).ToArray();
+
+            var safeName = MakeSafeFileName(simulationName);
+
+            await JS.InvokeVoidAsync(
+                "pssDownloadCompleteSimulationDocx",
+                $"{safeName}.docx",
+                metadata,
+                graphImages,
+                rows,
+                savedNotesTitle ?? string.Empty,
+                savedNotesContent ?? string.Empty);
+        }
+        catch (Exception ex)
+        {
+            pngExportError = $"DOCX export failed: {ex.Message}";
+            consoleLines.Add(pngExportError);
+        }
+        finally
+        {
+            isExportingDocx = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+    private string pngExportError = string.Empty;
+}

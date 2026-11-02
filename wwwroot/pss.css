@@ -1,0 +1,821 @@
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  font-family: "Google Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: weight;
+  font-style: normal;
+  font-variation-settings: "GRAD" 0;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+body * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body *::-webkit-scrollbar {
+  display: none;
+}
+
+
+.roboto-smart {
+  font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+}
+
+.reenie-beanie-regular {
+  font-family: "Reenie Beanie", cursive !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  font-size: 2rem !important;
+}
+
+
+
+html:not(.dark-theme):root {
+  --primary-background-color: 37, 99, 235 !important;
+  --secondary-background-color: 255, 140, 0 !important;
+  --gray-background-color: 248, 245, 239 !important;
+  --border-background-color: 229, 229, 229 !important;
+  --success-background-color: 34, 197, 94 !important;
+  --warning-background-color: 239, 68, 68 !important;
+}
+
+.navlink:hover {
+  background: rgb(var(--primary-background-color));
+  color: rgb(var(--white-background-color));
+  padding: 5px 10px 5px 10px;
+  text-align: center;
+  border-radius: 5px;
+  border-bottom: 3px solid rgb(var(--secondary-background-color));
+  transition: 0.3s ease-out;
+  opacity: 50%;
+}
+
+.navlink:focus {
+  background: rgb(var(--primary-background-color));
+  color: rgb(var(--white-background-color));
+  padding: 5px 10px 5px 10px;
+  text-align: center;
+  border-radius: 5px;
+  border-bottom: 3px solid rgb(var(--secondary-background-color));
+  transition: 0.3s ease-out;
+}
+
+.herosection {
+  background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(1, 22, 1, 0.8)), url("icons/herobg.jpeg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.recipe {
+  background: linear-gradient(rgba(255, 253, 245, 0.8), rgba(254, 255, 254, 0.8)), url("icons/herobg.jpeg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  /* height: 300px; */
+  /* display: flex;
+  justify-content: center;
+  align-items: center; */
+}
+
+.loginbg {
+  background: linear-gradient(rgba(45, 45, 45, 0.8), rgba(123, 126, 123, 0.8)), url("icons/mealbglog.webp");
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* .setting-btn:hover {
+  background: rgb(var(--primary-background-color));
+  color: rgb(var(--gray-background-color));
+  transition: 0.3s ease-out;
+  border-radius: 5px;
+  border-bottom: 3px solid rgb(var(--secondary-background-color));
+}
+
+.setting-btn:focus {
+  background: rgb(var(--primary-background-color));
+  color: rgb(var(--gray-background-color));
+  transition: 0.3s ease-out;
+  border-radius: 5px;
+  border-bottom: 3px solid rgb(var(--secondary-background-color));
+} */
+
+.button:hover {
+  opacity: 60%;
+  transition: 0.5s ease-in-out;
+}
+
+.btn-order:hover {
+  opacity: 60%;
+  transition: 0.5s ease-in-out;
+  background: rgb(var(--secondary-background-color));
+}
+
+.btn-order:hover {
+  opacity: 60%;
+  transition: 0.5s ease-in-out;
+  background: rgb(var(--secondary-background-color));
+  color: white;
+}
+
+.btn-order:focus {
+  opacity: 60%;
+  transition: 0.5s ease-in-out;
+  background: rgb(var(--secondary-background-color));
+  color: white;
+}
+
+
+.slide-in-left {
+  animation: slideInLeft 0.5s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+
+.slide-out-left {
+  animation: slideOutLeft 0.5s ease-in forwards;
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+
+.slide-in-right {
+  animation: slideInLeft 0.5s ease-out forwards;
+}
+
+/* The animation rules */
+@keyframes slideInLeft {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+
+.slide-out-right {
+  animation: slideOutLeft 0.5s ease-in forwards;
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.slide-in-top {
+  animation: slideInFromTop 0.5s ease-out forwards;
+}
+
+@keyframes slideInFromTop {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-out-top {
+  animation: slideInFromTop 0.5s ease-out forwards;
+}
+
+@keyframes slideOutFromTop {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+
+input:focus {
+  outline: none;
+}
+
+select:focus {
+  outline: none;
+}
+
+
+.bg-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mobile-cart {
+  position: relative;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+}
+
+.mobile-cart-inner {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.cardani:hover {
+  border-top: 5px solid rgb(var(--secondary-background-color));
+  background: rgb(255, 140, 0, 0.1);
+  transition: all 0.5s ease-in-out;
+}
+
+.cardani:focus {
+  border-top: 5px solid rgb(var(--secondary-background-color));
+  background: rgb(255, 140, 0, 0.1);
+  transition: all 0.5s ease-in-out;
+}
+
+.stat-card {
+  transition: .2s ease;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, .12);
+}
+
+.bg-disabled {
+  background: #ececec;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.meal-image.unavailable img {
+  filter: grayscale(100%);
+  opacity: .6;
+}
+
+
+
+
+
+
+
+/* html.dark-theme:root {
+  --primary-background-color: 16, 52, 31 !important;
+  --secondary-background-color: 243, 120, 32 !important;
+  --gray-background-color: 255, 251, 245 !important;
+} */
+
+
+
+
+.app-loading {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+}
+
+.loading-logo-wrapper {
+    width: 92px;
+    height: 92px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+.loading-logo {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.loading-brand {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.loading-message {
+    font-size: 14px;
+    opacity: 0.55;
+    margin-bottom: 24px;
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #eeeeee;
+    border-top-color: #000000;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+
+
+.setting-btn:hover {
+  color: rgb(var(--primary-background-color));
+  font-weight: bold;
+}
+
+.setting-btn:focus {
+  color: rgb(var(--primary-background-color));
+  font-weight: bold;
+}
+
+
+
+
+
+
+
+
+
+
+
+/* Browser refresh */
+
+html.page-reloading .app-loading {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+html.page-reloading .loading-logo-wrapper,
+html.page-reloading .loading-brand,
+html.page-reloading .loading-message {
+    display: none;
+}
+
+html.page-reloading .loading-spinner {
+    display: block;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #eeeeee;
+    border-top-color: #000000;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+
+
+
+
+
+
+
+
+
+
+@keyframes pss-loading {
+    0% {
+        transform: translateX(-110%);
+    }
+
+    100% {
+        transform: translateX(300%);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* PSS — Global typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --pss-font-family: 'Inter', -apple-system, BlinkMacSystemFont,
+                       'Segoe UI', sans-serif;
+    --pss-font-mono: 'SFMono-Regular', Consolas, monospace;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+    font-family: var(--pss-font-family);
+}
+
+body {
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--pss-font-family);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+
+button {
+    font-weight: 500;
+}
+
+code,
+pre,
+.font-mono {
+    font-family: var(--pss-font-mono);
+}
+
+
+
+
+
+
+
+
+
+/* =========================================
+   PSS APPLICATION LOADING SCREEN
+========================================= */
+
+.pss-loading-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background:
+        radial-gradient(
+            circle at 50% 42%,
+            rgba(0, 104, 190, 0.20),
+            transparent 42%
+        ),
+        linear-gradient(145deg, #020817, #061a35 55%, #020817);
+    color: #ffffff;
+    font-family: inherit;
+}
+
+.pss-loading-screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.16;
+    background-image:
+        linear-gradient(rgba(55, 170, 255, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(55, 170, 255, 0.12) 1px, transparent 1px);
+    background-size: 45px 45px;
+    mask-image: linear-gradient(to bottom, transparent, black, transparent);
+    pointer-events: none;
+}
+
+.pss-loading-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(90%, 480px);
+    text-align: center;
+    animation: pss-content-appear 1s ease both;
+}
+
+/* Logo */
+
+.pss-logo-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 230px;
+    height: 230px;
+    margin-bottom: 30px;
+}
+
+.pss-loading-logo {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 22px rgba(0, 153, 255, 0.35));
+    animation: pss-logo-glow 3s ease-in-out infinite;
+}
+
+/* Animated orbital rings */
+
+.pss-orbit {
+    position: absolute;
+    inset: -13px;
+    border: 1px solid rgba(0, 174, 255, 0.35);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.pss-orbit-one {
+    border-top-color: #00bfff;
+    border-bottom-color: transparent;
+    animation: pss-orbit-spin 7s linear infinite;
+}
+
+.pss-orbit-two {
+    inset: -23px;
+    border-color: transparent;
+    border-right: 2px solid rgba(0, 174, 255, 0.7);
+    border-left: 1px solid rgba(255, 255, 255, 0.25);
+    animation: pss-orbit-spin 11s linear infinite reverse;
+}
+
+/* Text */
+
+.pss-loading-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 4px;
+}
+
+.pss-loading-subtitle {
+    margin-top: 12px;
+    color: #9ab9d7;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+/* Progress indicator */
+
+.pss-loading-indicator {
+    position: relative;
+    width: 220px;
+    height: 3px;
+    margin-top: 35px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.pss-loading-bar {
+    position: absolute;
+    width: 40%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        #00bfff,
+        #ffffff,
+        #00bfff,
+        transparent
+    );
+    box-shadow: 0 0 12px #00aaff;
+    animation: pss-loading-progress 1.8s ease-in-out infinite;
+}
+
+.pss-loading-status {
+    margin-top: 15px;
+    color: #7fa8cc;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+/* Footer */
+
+.pss-loading-footer {
+    position: absolute;
+    bottom: 30px;
+    color: rgba(155, 190, 220, 0.55);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+/* Animations */
+
+@keyframes pss-orbit-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pss-logo-glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 15px rgba(0, 153, 255, 0.25));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 28px rgba(0, 174, 255, 0.55));
+    }
+}
+
+@keyframes pss-loading-progress {
+    0% {
+        left: -45%;
+    }
+
+    100% {
+        left: 110%;
+    }
+}
+
+@keyframes pss-content-appear {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile */
+
+@media (max-width: 576px) {
+    .pss-logo-wrapper {
+        width: 185px;
+        height: 185px;
+    }
+
+    .pss-loading-title {
+        font-size: 13px;
+        letter-spacing: 2px;
+    }
+
+    .pss-loading-subtitle {
+        font-size: 11px;
+    }
+
+    .pss-loading-footer {
+        font-size: 8px;
+        letter-spacing: 2px;
+    }
+}
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+    .pss-loading-logo,
+    .pss-orbit,
+    .pss-loading-bar,
+    .pss-loading-content {
+        animation: none !important;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Reusable PSS Loading Indicator */
+
+.pss-inline-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 25px 15px;
+    width: 100%;
+}
+
+.pss-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.pss-spinner span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #00aaff;
+    box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+    animation: pss-dot-pulse 1.2s ease-in-out infinite;
+}
+
+.pss-spinner span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.pss-spinner span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.pss-inline-loader p {
+    margin: 0;
+    color: var(--cl-secondary, #829ab1);
+    font-size: 12px;
+    text-align: center;
+}
+
+@keyframes pss-dot-pulse {
+    0%, 80%, 100% {
+        opacity: 0.35;
+        transform: scale(0.7);
+    }
+
+    40% {
+        opacity: 1;
+        transform: scale(1.25);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pss-spinner span {
+        animation: none;
+        opacity: 1;
+    }
+}

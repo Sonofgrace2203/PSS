@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Kinematics">
+<title>Kinematics</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><path d="M10 52h52m-8-7 8 7-8 7" fill="none" stroke="#123b70" stroke-width="3"/><circle cx="20" cy="34" r="6" fill="#3b82f6"/><circle cx="48" cy="22" r="6" fill="#10b981"/><path d="M27 31l14-6" stroke="#123b70" stroke-width="3"/></g>
+</svg>

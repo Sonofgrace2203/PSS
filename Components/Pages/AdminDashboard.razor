@@ -1,0 +1,601 @@
+@page "/AdminDashboard"
+@using System.Net.Http.Json
+@using System.Globalization
+@using ApexCharts
+@using pss.Components.Shared
+@using pss.Models.Dtos
+@using pss.Models.Settings
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
+@attribute [Authorize(Roles = "Admin,SuperAdmin")]
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="gap-2 mgb-5">
+    <div class="flex flex-spacebetween">
+        <h2 class="mg-0 pdb-2 fsz-20 cl-primary">
+            Welcome back@(string.IsNullOrWhiteSpace(displayName)
+                                                                ? string.Empty
+                                                                : $", {displayName}")!
+        </h2>
+
+        <span class="pd corner-2 fsz-11 bg-success-01 cl-success block">
+            @displayRole
+        </span>
+    </div>
+    <p class="mg-0 fsz-13">What would you like to explore today?</p>
+</div>
+
+<div class="mgb-5 mgt-10">
+    <h4 class="mg-0 fsz-15 cl-primary pdb-2">Platform Overview</h4>
+    <p class="mg-0 fsz-12">
+        Monitor users, simulations, and platform activity.
+    </p>
+</div>
+
+@if (isTipsSettingLoaded && showTipsOnStartup && showStartupTips)
+{
+    <div class="mgb-5 pd bg-primary-01 corner-2 shadow-border-1">
+        <div class="flex flex-spacebetween">
+            <h3 class="mg-0 pdb-3 fsz-15 cl-primary">
+                <icon name="lightbulb" size="16" />
+                Getting Started with PSS
+            </h3>
+
+            <button class="bd-none bg-transparent mdi mdi-close fsz-18 setting-btn" title="Dismiss tips"
+                    aria-label="Dismiss tips" style="cursor: pointer;" @onclick="DismissStartupTips">
+            </button>
+        </div>
+
+        <ul class="fsz-13 pd mgb-3" style="list-style: none;">
+            <li class="mgb-3 mdi mdi-dock-right">
+                Select <strong>Quick Start</strong> to explore available simulation modules.
+            </li>
+            <li class="mgb-3 mdi mdi-dock-right">
+                Choose an implemented simulation and adjust its physics parameters.
+            </li>
+            <li class="mgb-3 mdi mdi-dock-right">
+                Run your simulation and explore its graphs and data tables.
+            </li>
+            <li class="mdi mdi-dock-right">
+                Save your results and add notes to revisit your work later.
+            </li>
+        </ul>
+
+        <button class="bg-primary cl-white bd-none corner-2 pd fsz-12" style="cursor: pointer;"
+                @onclick='() => Nav.NavigateTo("/SimulationLibrary")'>
+            Explore Simulations
+        </button>
+    </div>
+}
+
+<div class="mgb-5">
+    <div class="bg-primary-01 pdl pdr corner-2 colm-25 mgb" style="cursor:pointer;"
+         @onclick='() => Nav.NavigateTo("/SimulationLibrary")'>
+        <RecentCard Image="icons/quick-start.svg" Title="Quick Start" SubTitle="Jump into a simulation" />
+    </div>
+
+    <div class="flex flex-start colm-25">
+        <div class="corner-3 flex flex-center wf">
+            <input type="text" placeholder="🔍 Find a simulation by name, topic or category..."
+                   class="corner-2 bd bg-card pd wf" @bind="searchText" @bind:event="oninput" />
+        </div>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="wf flex flex-center align-justify align-center" style="height:70vh">
+        @* <p class="fsz-12">Loading your dashboard...</p> *@
+        <LoadingIndicator IsLoading="@isLoading" Message="Loading your dashboard..."/>
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <p class="fsz-13">@errorMessage</p>
+    }
+
+    <div class="scroll-y" style="height:90vh;">
+
+        <div class="mgt mgb-10 bg-card corner-2 shadow-border-1">
+            <h3 class="mg-0 pdb-2 fsz-15 cl-primary">
+                Platform Statistics
+            </h3>
+
+            <div class="grid gap-1 colm-2 wf">
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">Total users</p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @statistics.TotalUsers
+                    </h3>
+                </div>
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">Active users</p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @statistics.ActiveUsers
+                    </h3>
+                </div>
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">Total simulations</p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @statistics.TotalSimulations
+                    </h3>
+                </div>
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">
+                        Simulations this week
+                    </p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @statistics.SimulationsInPeriod
+                    </h3>
+                </div>
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">Available modules</p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @modules.Count
+                    </h3>
+                </div>
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">Implemented modules</p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @modules.Count(m => m.IsImplemented)
+                    </h3>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="mgt mgb-10 bg-card corner-2 shadow-border-1">
+            <h3 class="mg-0 pdb-2 fsz-15 cl-primary">
+                Your Statistics
+            </h3>
+
+            <div class="grid gap-1 colm-2 wf">
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">
+                        Total simulations
+                    </p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @statistics.TotalSimulations
+                    </h3>
+                </div>
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">
+                        Simulations this week
+                    </p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @statistics.SimulationsInPeriod
+                    </h3>
+                </div>
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">
+                        Available modules
+                    </p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @modules.Count
+                    </h3>
+                </div>
+
+                <div class="pd corner-2 bd">
+                    <p class="mg-0 fsz-12 op-7">
+                        Implemented modules
+                    </p>
+                    <h3 class="mg-0 fsz-20 text-right">
+                        @modules.Count(m => m.IsImplemented)
+                    </h3>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="mgb-10">
+            <h3 class="mg-0 pdb-2 fsz-15 cl-primary">
+                @(string.IsNullOrWhiteSpace(searchText)
+                    ? "Popular Simulations"
+                    : "Search Results")
+            </h3>
+
+            <div class="grid gap-1 colm-15">
+                @foreach (var module in FilteredModules.Take(4))
+                {
+                    <div @key="module.Id" style="cursor:pointer;" @onclick="() => OpenModule(module)">
+
+                        <StatCard Title="@module.Title" SubTitle="@module.Category" Image="@module.ImageUrl" />
+
+                    </div>
+                }
+            </div>
+
+            @if (!FilteredModules.Any())
+            {
+                <p class="fsz-13">No matching simulations found.</p>
+            }
+        </div>
+
+        <div class="row responsive miwx-3">
+
+            <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1 mgr-5 wvg-5">
+                <h3 class="mg-0 pdb-5 fsz-15 cl-primary">
+                    Recent Simulations
+                </h3>
+
+                @if (recentSimulations.Count == 0)
+                {
+                    <p class="fsz-13">
+                        No saved simulations were found.
+                    </p>
+                }
+                else
+                {
+                    <div class="grid gap-1 colm-3 scroll-y" style="height: 55vh">
+                        @foreach (var simulation in recentSimulations.Take(8))
+                        {
+                            <div @key="simulation.SimulationId">
+                                <RecentCard Title="@GetSimulationTitle(simulation)"
+                                            SubTitle="@($"{GetSimulationOwner(simulation)} · {FormatDate(simulation.CreatedAtUtc)}")"
+                                            Image="@GetModuleImage(simulation.ModuleId)" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1 mgb-5 wvl-5">
+                <h3 class="mg-0 pdb-5 fsz-15 cl-primary">
+                    Recent Simulations
+                </h3>
+
+                @if (recentSimulations.Count == 0)
+                {
+                    <p class="fsz-13">
+                        No saved simulations were found.
+                    </p>
+                }
+                else
+                {
+                    <div class="grid gap-1 colm-3 scroll-y" style="height: 55vh">
+                        @foreach (var simulation in recentSimulations.Take(8))
+                        {
+                            <div @key="simulation.SimulationId">
+                                <RecentCard Title="@GetSimulationTitle(simulation)"
+                                            SubTitle="@($"{GetSimulationOwner(simulation)} · {FormatDate(simulation.CreatedAtUtc)}")"
+                                            Image="@GetModuleImage(simulation.ModuleId)" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1">
+                <h3 class="mg-0 pdb-5 fsz-15 cl-primary">
+                    Simulation Activity
+                </h3>
+
+                <p class="mg-0 fsz-12 op-7">
+                    Saved simulations over the last 7 days
+                </p>
+
+                @if (statistics.DailyActivity.Count > 0)
+                {
+                    <div class="mgt-10">
+                        <ApexChart TItem="ActivityPoint" Height="300" Options="activityChartOptions">
+                            <ApexPointSeries TItem="ActivityPoint" Items="activityPoints" SeriesType="SeriesType.Line"
+                                             XValue="point => point.Label" YValue="point => point.Count" Name="Simulations" />
+                        </ApexChart>
+                    </div>
+                }
+                else
+                {
+                    <p class="fsz-13">No activity data available.</p>
+                }
+            </div>
+        </div>
+
+        <div class="mgt colm-25 pd bg-card corner-2 shadow-border-1 mgb-5 wvl-5">
+            <h3 class="mg-0 pdb-5 fsz-15 cl-primary">
+                Most Used Modules
+            </h3>
+
+            @if (statistics.ModuleBreakdown.Count == 0)
+            {
+                <p class="fsz-13">No simulation activity recorded yet.</p>
+            }
+            else
+            {
+                <div class="scroll-y" style="height: 55vh">
+                    @foreach (var module in statistics.ModuleBreakdown.Take(8))
+                    {
+                        <div @key="module.ModuleId" class="mgb-5">
+                            <div class="flex flex-spacebetween">
+                                <span class="fsz-12">@module.ModuleTitle</span>
+                                <span class="fsz-12">@module.Count</span>
+                            </div>
+
+                            <div class="bg-primary-01 corner-2 mgt-2" style="height: 6px;">
+                                <div class="bg-primary corner-2"
+                                     style="@($"height: 6px; width: {GetModuleBarWidth(module.Count)}%;")">
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private string displayName = string.Empty;
+    private string displayRole = "User";
+
+    private List<DashboardModuleDto> modules = new();
+
+    private string searchText = string.Empty;
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    private bool showTipsOnStartup = true;
+    private bool showStartupTips = true;
+    private bool isTipsSettingLoaded = false;
+
+    private List<AdminDashboardRecentDto> recentSimulations = new();
+    private AdminDashboardStatisticsDto statistics = new();
+
+    private IEnumerable<DashboardModuleDto> FilteredModules =>
+        modules.Where(m =>
+            string.IsNullOrWhiteSpace(searchText) ||
+            m.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            m.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            m.Category.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var moduleTask =
+                Http.GetFromJsonAsync<List<DashboardModuleDto>>(
+                    "api/modules/");
+
+            var recentTask =
+                Http.GetFromJsonAsync<List<AdminDashboardRecentDto>>(
+                    "api/admin/dashboard/recent?limit=10");
+
+            var statisticsTask =
+                Http.GetFromJsonAsync<AdminDashboardStatisticsDto>(
+                    "api/admin/dashboard/statistics?period=week");
+
+            await Task.WhenAll(moduleTask, recentTask, statisticsTask);
+
+            modules = await moduleTask ?? new();
+            recentSimulations = await recentTask ?? new();
+            statistics = await statisticsTask ?? new();
+
+            activityPoints = statistics.DailyActivity
+                .Select(day => new ActivityPoint
+                {
+                    Label = day.Label,
+                    Count = day.Count
+                })
+                .ToList();
+
+            recentSimulations = recentSimulations
+                .OrderByDescending(s => s.CreatedAtUtc)
+                .ToList();
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+
+            var user = authState.User;
+
+            displayName =
+                user.FindFirst(ClaimTypes.Name)?.Value
+                ?? user.Identity?.Name
+                ?? string.Empty;
+
+            displayRole = user.IsInRole("SuperAdmin")
+                ? "SuperAdmin"
+                : user.IsInRole("Admin")
+                    ? "Admin"
+                    : user.IsInRole("User")
+                        ? "User"
+                        : "Account";
+
+            try
+            {
+                var generalSettings =
+                    await Http.GetFromJsonAsync<GeneralSettingsResponse>(
+                        "/api/settings/general/");
+
+                if (generalSettings is not null)
+                {
+                    showTipsOnStartup = generalSettings.ShowTipsOnStartup;
+                    isTipsSettingLoaded = true;
+                }
+            }
+            catch (HttpRequestException)
+            {
+                // Keep the tips hidden if the saved setting cannot be loaded.
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // Keep the tips hidden if the response is invalid.
+            }
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage =
+                "Unable to load admin dashboard data. Check the API connection and your administrator access.";
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            errorMessage =
+                "The API returned data in an unexpected format.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private static string GetSimulationTitle(
+    AdminDashboardRecentDto simulation)
+    {
+        return string.IsNullOrWhiteSpace(simulation.Name)
+            ? simulation.ModuleTitle
+            : simulation.Name;
+    }
+
+    private static string GetSimulationOwner(
+        AdminDashboardRecentDto simulation)
+    {
+        if (!string.IsNullOrWhiteSpace(simulation.UserName))
+            return simulation.UserName;
+
+        if (!string.IsNullOrWhiteSpace(simulation.UserEmail))
+            return simulation.UserEmail;
+
+        return "Unknown user";
+    }
+
+
+    private void DismissStartupTips()
+    {
+        showStartupTips = false;
+    }
+
+    private void OpenModule(DashboardModuleDto module)
+    {
+        if (!module.IsImplemented)
+            return;
+
+        if (module.Slug == "projectile")
+        {
+            Nav.NavigateTo(
+                $"/SimulationWorkSpace?moduleId={module.Id}");
+        }
+        else
+        {
+            Nav.NavigateTo("/SimulationLibrary");
+        }
+    }
+
+    private string GetModuleImage(string? moduleId)
+    {
+        if (string.IsNullOrWhiteSpace(moduleId))
+            return string.Empty;
+
+        var module = modules.FirstOrDefault(m =>
+            string.Equals(
+                m.Slug,
+                moduleId,
+                StringComparison.OrdinalIgnoreCase));
+
+        return module?.ImageUrl ?? string.Empty;
+    }
+
+    private static string GetSimulationTitle(DashboardRecentDto simulation)
+    {
+        return string.IsNullOrWhiteSpace(simulation.Name)
+            ? simulation.ModuleTitle
+            : simulation.Name;
+    }
+
+    private static string FormatDate(DateTime createdAtUtc)
+    {
+        return createdAtUtc.ToLocalTime().ToString(
+            "dd MMM yyyy, hh:mm tt",
+            CultureInfo.InvariantCulture);
+    }
+
+    private int GetBarWidth(int count)
+    {
+        if (count <= 0)
+            return 0;
+
+        var maxCount = statistics.DailyActivity
+            .Select(d => d.Count)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return maxCount == 0
+            ? 0
+            : Math.Max(3, (int)Math.Round(count * 100.0 / maxCount));
+    }
+
+    private int GetModuleBarWidth(int count)
+    {
+        if (count <= 0)
+            return 0;
+
+        var maxCount = statistics.ModuleBreakdown
+            .Select(m => m.Count)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return maxCount == 0
+            ? 0
+            : Math.Max(3, (int)Math.Round(count * 100.0 / maxCount));
+    }
+
+    private List<ActivityPoint> activityPoints = new();
+
+    private ApexCharts.ApexChartOptions<ActivityPoint> activityChartOptions =
+    new()
+    {
+        Chart = new ApexCharts.Chart
+        {
+            Toolbar = new ApexCharts.Toolbar
+            {
+                Show = false
+            }
+        },
+        Stroke = new ApexCharts.Stroke
+        {
+            Curve = ApexCharts.Curve.Smooth,
+            Width = 3
+        },
+        DataLabels = new ApexCharts.DataLabels
+        {
+            Enabled = false
+        },
+        Xaxis = new ApexCharts.XAxis
+        {
+            Labels = new ApexCharts.XAxisLabels
+            {
+                Rotate = -45
+            }
+        },
+        Yaxis = new List<ApexCharts.YAxis>
+        {
+            new()
+            {
+                Min = 0,
+                ForceNiceScale = true
+            }
+        }
+    };
+
+    private sealed class ActivityPoint
+    {
+        public string Label { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+}

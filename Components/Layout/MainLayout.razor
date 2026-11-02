@@ -1,0 +1,74 @@
+﻿@using pss.Components.Shared
+@using pss.Services
+@inherits LayoutComponentBase
+
+@inject NavigationManager Nav
+@inject AuthService Auth
+
+<div class="page">
+    <div class="wx-15 wvg-5 bg-card bdr scroll-y">
+        <NavMenu ConfirmIsLogout="KeepLogout" />
+    </div>
+
+    <div class="bg-card" style="position: fixed; top: 0; left: 0; right: 0; z-index: 8;">
+        <div class="wf wvl-5 scroll-y">
+            <NavMenu ConfirmIsLogout="KeepLogout" />
+        </div>
+    </div>
+
+    <main class="scroll-y" style="height: 100vh;">
+        @* <div class="top-row px-4">
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        </div> *@
+
+        <div class="pd-5">
+            @Body
+        </div>
+
+        @* <div class="content px-4">
+            @Body
+        </div> *@
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@if (IsLogout)
+{
+    <ConfirmDialog TitleStart="Confirm Logout?" TitleAction="1"
+                   SubTitle="Are you sure you want to sign out of this account?" CancelButtonAble="@(!IsLogout)"
+                   OnCancel="CancelLogout" ConfirmButtonAble="@(!IsLogout)" OnConfirm="ConfirmLogout"
+                   ConfirmButtonProcess="@(IsLogout ? "Yes, logout" : "Logging out...")" />
+}
+
+@code {
+    private bool keepLogout = false;
+    [Parameter] public bool IsLogout { get; set; } = false;
+
+    private async Task ConfirmLogout()
+    {
+        Auth.Logout();
+
+        await Task.Delay(500);
+
+        IsLogout = false;
+        await InvokeAsync(StateHasChanged);
+
+        Nav.NavigateTo("");
+    }
+
+    private void CancelLogout()
+    {
+        IsLogout = false;
+    }
+
+    private void KeepLogout()
+    {
+        keepLogout = true;
+        IsLogout = true;
+    }
+}

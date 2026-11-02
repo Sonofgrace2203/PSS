@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Doppler Effect">
+<title>Doppler Effect</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><circle cx="36" cy="36" r="6" fill="#ef4444"/><g fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M23 25a16 16 0 0 0 0 22M17 19a25 25 0 0 0 0 34M49 25a16 16 0 0 1 0 22M55 19a25 25 0 0 1 0 34"/></g></g>
+</svg>

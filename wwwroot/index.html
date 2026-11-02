@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pss</title>
+    <base href="/" />
+    <link rel="preload" id="webassembly" />
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="pss.css" />
+    <link rel="stylesheet" href="mdi/css/materialdesignicons.min.css" />
+    <link rel="stylesheet" href="LivingThing.Core.Frameworks.Client.css" />
+    <link rel="icon" type="image/png" href="pss.png" />
+    <link href="pss.styles.css" rel="stylesheet" />
+    <script type="importmap"></script>
+</head>
+
+<body>
+    <div id="app">
+        <div class="pss-loading-screen">
+            <div class="pss-loading-content">
+
+                <div class="pss-logo-wrapper">
+                    <div class="pss-orbit pss-orbit-one"></div>
+                    <div class="pss-orbit pss-orbit-two"></div>
+
+                    <img src="pss.png" alt="PSS Physics Simulation Suite" class="pss-loading-logo" />
+                </div>
+
+                <h1 class="pss-loading-title">PHYSICS SIMULATION SUITE</h1>
+
+                <p class="pss-loading-subtitle">
+                    Exploring physics through simulation
+                </p>
+
+                <div class="pss-loading-indicator">
+                    <div class="pss-loading-bar"></div>
+                </div>
+
+                <p class="pss-loading-status">
+                    Preparing your physics workspace...
+                </p>
+
+            </div>
+
+            <div class="pss-loading-footer">
+                POWERED BY SCIENCE & TECHNOLOGY
+            </div>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="lib/jspdf/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <!-- DOCX export library -->
+    <script src="https://unpkg.com/docx@9.12.0/dist/index.umd.cjs"></script>
+    <script src="js/download.js"></script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+</body>
+
+</html>

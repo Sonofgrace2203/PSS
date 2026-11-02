@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Simple Harmonic Motion">
+<title>Simple Harmonic Motion</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><path d="M8 36h8l5-15 9 30 9-30 9 30 5-15h11" fill="none" stroke="#2563eb" stroke-width="3.5"/><rect x="53" y="28" width="12" height="16" rx="2" fill="#8b5cf6"/></g>
+</svg>

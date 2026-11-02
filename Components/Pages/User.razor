@@ -1,0 +1,545 @@
+@page "/Users"
+@using System.Net.Http.Json
+@using System.Globalization
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using pss.Components.Shared
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
+@attribute [Authorize(Roles = "Admin,SuperAdmin")]
+
+<div class="hx-08 wvl-5"></div>
+
+<div class="flex flex-spacebetween flow">
+    <div class="mgb-10">
+        <h2 class="mg-0 fsz-20 cl-primary">User Management</h2>
+        <p class="mg-0 fsz-13">
+            View and manage PSS user accounts
+        </p>
+    </div>
+
+    <div>
+        <input type="text" placeholder="🔍 Search users by name, email or role"
+               class="wx-3 pd corner-2 bd-none bd mgb-5" @bind="searchTerm" @bind:event="oninput" />
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="wf flex flex-center align-justify align-center" style="height:70vh">
+        <LoadingIndicator IsLoading="@isLoading" Message="Loading users"/>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="wf flex flex-center align-justify align-center" style="height:70vh">
+        <p class="mgt-5 cl-fatal fsz-12" role="alert">
+            @errorMessage
+        </p>
+
+        <button class="bd corner-2 pd bg-primary-01 fsz-10" @onclick="LoadUsersAsync">
+            Retry
+        </button>
+    </div>
+}
+else
+{
+    @if (selectedUser is not null)
+    {
+        <div class="pd bd corner-2 mgt-5">
+            <div class="flex flex-spacebetween flex-center flow">
+                <h3 class="mg-0 fsz-16 cl-primary">
+                    User Details
+                </h3>
+
+                <button class="bd corner-2 pd bg-primary-01" @onclick="CloseDetails">
+                    Close
+                </button>
+            </div>
+
+            <p class="pd-2">
+                <strong>Full name:</strong> @selectedUser.FullName
+            </p>
+
+            <p class="pd-2">
+                <strong>Email:</strong> @selectedUser.Email
+            </p>
+
+            <p class="pd-2">
+                <strong>User ID:</strong> @selectedUser.Id
+            </p>
+
+            <p class="pd-2">
+                <strong class="mgr-3">Role:</strong>
+                @foreach (var role in selectedUser.Roles)
+                {
+                    <span class="pd corner-2 fsz-11 bg-primary-01 cl-primary">
+                        @role
+                    </span>
+                }
+            </p>
+
+            <p class="pd-2">
+                <strong>Account status:</strong>
+                @(selectedUser.IsActive ? "Active" : "Inactive")
+            </p>
+
+            <p class="pd-2">
+                <strong>Registered:</strong>
+                @FormatDate(selectedUser.CreatedAtUtc)
+            </p>
+
+            <p class="pd-2">
+                <strong>Saved simulations:</strong>
+                @selectedUser.SimulationCount
+            </p>
+        </div>
+    }
+
+    @if (userPendingDelete is not null)
+    {
+        <ConfirmDialog TitleStart="Delete user account?" TitleAction="1"
+                       SubTitle="This permanently removes the selected account. Ensure its associated data is handled according to your retention policy. This action cannot be undone."
+                       CancelButtonAble="@isProcessing" OnCancel="CancelDelete" ConfirmButtonAble="@isProcessing"
+                       OnConfirm="ConfirmDeleteAsync" ConfirmButtonProcess="@(isProcessing ? "Deleting..." : "Yes, delete account")" />
+    }
+
+    @if (userPendingPromotion is not null)
+    {
+        <ConfirmDialog TitleStart="Change user role?" TitleAction="1"
+                       SubTitle="@($"Change {userPendingPromotion.FullName}'s role to {GetPromotionTarget(userPendingPromotion)}? This grants additional account permissions.")"
+                       CancelButtonAble="@isProcessing" OnCancel="CancelPromotion" ConfirmButtonAble="@isProcessing"
+                       OnConfirm="ConfirmPromotionAsync" ConfirmButtonProcess="@(isProcessing ? "Updating..." : "Confirm role change")" />
+    }
+
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <p class="fsz-12 cl-primary" role="status">
+            @successMessage
+        </p>
+    }
+
+    <div class="wf mgt">
+        <div class="scroll-y" style="height:90vh;">
+            <div style="overflow-x:auto; max-width:100%;" class="bd corner-2">
+
+                <table style="width:100%; border-collapse:collapse; min-width:1000px;">
+                    <thead>
+                        <tr class="bg-primary-01">
+                            <th class="cl-primary text-left" style="padding:12px;">User</th>
+                            <th class="cl-primary text-left" style="padding:12px;">Role</th>
+                            <th class="cl-primary text-left" style="padding:12px;">Status</th>
+                            <th class="cl-primary text-left" style="padding:12px;">Simulations</th>
+                            <th class="cl-primary text-left" style="padding:12px;">Registered</th>
+                            <th class="cl-primary text-left" style="padding:12px;">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (PagedUsers.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="pd text-center fsz-12" style="height:30vh;">
+                                    No matching users found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var user in PagedUsers)
+                            {
+                                <tr @key="user.Id" style="border-top:1px solid #8884;">
+
+                                    <td style="padding:12px;">
+                                        <strong>@user.FullName</strong>
+                                        <p class="mg-0 fsz-13 op-6">
+                                            @user.Email
+                                        </p>
+                                    </td>
+
+                                    <td style="padding:12px;">
+                                        @foreach (var role in user.Roles)
+                                        {
+                                            <span class="pd corner-2 fsz-11 mgr-1 bg-primary-01 cl-primary">
+                                                @role
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td style="padding:12px;">
+                                        <span class="pd corner-2 fsz-11 @(user.IsActive ? "bg-primary-01 cl-primary" : "cl-fatal")">
+                                            @(user.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+
+                                    <td style="padding:12px;">
+                                        @user.SimulationCount
+                                    </td>
+
+                                    <td style="padding:12px;">
+                                        @FormatDate(user.CreatedAtUtc)
+                                    </td>
+
+                                    <td style="padding:12px;">
+                                        <button class="bd-none bg-transparent mgr-3" title="View user details"
+                                                aria-label="View user details" style="cursor:pointer;"
+                                                @onclick="() => OpenDetails(user)">
+                                            <i class="mdi mdi-eye fsz-20 cl-secondary"></i>
+                                        </button>
+
+                                        @if (isSuperAdmin && CanManage(user))
+                                        {
+                                            <button class="bd-none bg-transparent mgr-3" title="@GetPromotionTarget(user)"
+                                                    aria-label="@GetPromotionTarget(user)" style="cursor:pointer;" disabled="@isProcessing"
+                                                    @onclick="() => RequestPromotion(user)">
+                                                <i class="mdi mdi-account-arrow-up fsz-20 cl-primary"></i>
+                                            </button>
+
+                                            <button class="bd-none bg-transparent mgr-3" title="Delete user" aria-label="Delete user"
+                                                    style="cursor:pointer;" disabled="@isProcessing" @onclick="() => RequestDelete(user)">
+                                                <i class="mdi mdi-delete fsz-20 cl-fatal"></i>
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <Pagination CurrentPage="@CurrentPage" TotalPages="@TotalPages" TotalItems="@FilteredUsers.Count"
+                    PageSize="@PageSize" ItemLabel="user" CurrentPageChanged="HandlePageChanged"
+                    PageSizeChanged="HandlePageSizeChanged" />
+    </div>
+}
+
+@code {
+    private List<AdminUserRow> users = new();
+    private AdminUserRow? selectedUser;
+    private AdminUserRow? userPendingDelete;
+    private AdminUserRow? userPendingPromotion;
+
+    private string searchTerm = string.Empty;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private bool isLoading = true;
+    private bool isProcessing;
+    private bool isSuperAdmin;
+    private bool confirmBeforeDeleting = true;
+    private bool isLoadingGeneralSettings;
+
+    private int CurrentPage = 1;
+    private int PageSize = 10;
+
+    private int TotalPages =>
+        Math.Max(1, (int)Math.Ceiling(
+            FilteredUsers.Count / (double)PageSize));
+
+    private List<AdminUserRow> FilteredUsers =>
+        users.Where(user =>
+            string.IsNullOrWhiteSpace(searchTerm)
+            || user.FullName.Contains(
+                searchTerm.Trim(),
+                StringComparison.OrdinalIgnoreCase)
+            || user.Email.Contains(
+                searchTerm.Trim(),
+                StringComparison.OrdinalIgnoreCase)
+            || user.Roles.Any(role => role.Contains(
+                searchTerm.Trim(),
+                StringComparison.OrdinalIgnoreCase))
+            || user.Id.Contains(
+                searchTerm.Trim(),
+                StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    private List<AdminUserRow> PagedUsers =>
+        FilteredUsers
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState =
+            await AuthStateProvider.GetAuthenticationStateAsync();
+
+        isSuperAdmin = authState.User.IsInRole("SuperAdmin");
+
+        await LoadDeleteConfirmationSettingAsync();
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            // Requires the protected backend endpoint described below.
+            users = await Http.GetFromJsonAsync<List<AdminUserRow>>(
+                "/api/admin/users") ?? new();
+
+            if (selectedUser is not null)
+            {
+                selectedUser = users.FirstOrDefault(
+                    user => user.Id == selectedUser.Id);
+            }
+
+            CurrentPage = Math.Min(CurrentPage, TotalPages);
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage =
+                "Could not load user accounts. Check the backend connection and your permissions.";
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            errorMessage =
+                "The user list returned an unexpected response format.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadDeleteConfirmationSettingAsync()
+    {
+        isLoadingGeneralSettings = true;
+
+        try
+        {
+            var settings = await Http.GetFromJsonAsync<GeneralSettingsResponse>(
+                "/api/settings/general/");
+
+            if (settings is not null)
+            {
+                confirmBeforeDeleting = settings.ConfirmBeforeDeleting;
+            }
+        }
+        catch (HttpRequestException)
+        {
+            confirmBeforeDeleting = true;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            confirmBeforeDeleting = true;
+        }
+        finally
+        {
+            isLoadingGeneralSettings = false;
+        }
+    }
+
+    private void OpenDetails(AdminUserRow user)
+    {
+        selectedUser = user;
+    }
+
+    private void CloseDetails()
+    {
+        selectedUser = null;
+    }
+
+    private static string FormatDate(DateTime createdAtUtc) =>
+        createdAtUtc.ToLocalTime().ToString(
+            "dd MMM yyyy, hh:mm tt",
+            CultureInfo.InvariantCulture);
+
+    private bool CanManage(AdminUserRow user) =>
+        !user.Roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+
+    private static string GetPromotionTarget(AdminUserRow user) =>
+        user.Roles.Contains("Admin", StringComparer.OrdinalIgnoreCase)
+            ? "Demote to User"
+            : "Promote to Admin";
+
+    private void RequestPromotion(AdminUserRow user)
+    {
+        if (!isSuperAdmin || isProcessing || !CanManage(user))
+            return;
+
+        userPendingPromotion = user;
+    }
+
+    private void CancelPromotion()
+    {
+        if (!isProcessing)
+            userPendingPromotion = null;
+    }
+
+    private async Task ConfirmPromotionAsync()
+    {
+        if (!isSuperAdmin ||
+            isProcessing ||
+            userPendingPromotion is null ||
+            !CanManage(userPendingPromotion))
+            return;
+
+        var user = userPendingPromotion;
+        var makeAdmin = !user.Roles.Contains(
+            "Admin", StringComparer.OrdinalIgnoreCase);
+
+        isProcessing = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            // Requires a protected role-management endpoint.
+            using var response = await Http.PutAsJsonAsync(
+                $"/api/admin/users/{Uri.EscapeDataString(user.Id)}/role",
+                new { Role = makeAdmin ? "Admin" : "User" });
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = makeAdmin
+                    ? $"Promoted {user.FullName} to Admin."
+                    : $"Demoted {user.FullName} to User.";
+
+                userPendingPromotion = null;
+                await LoadUsersAfterActionAsync();
+            }
+            else
+            {
+                errorMessage =
+                    $"Role update failed (HTTP {(int)response.StatusCode}).";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not connect to the backend.";
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task RequestDelete(AdminUserRow user)
+    {
+        if (!isSuperAdmin ||
+            isProcessing ||
+            isLoadingGeneralSettings ||
+            !CanManage(user))
+            return;
+
+        errorMessage = null;
+        successMessage = null;
+
+        if (confirmBeforeDeleting)
+        {
+            userPendingDelete = user;
+            return;
+        }
+
+        userPendingDelete = null;
+        await DeleteUserAsync(user);
+    }
+
+    private void CancelDelete()
+    {
+        if (!isProcessing)
+            userPendingDelete = null;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (userPendingDelete is null || isProcessing)
+            return;
+
+        var user = userPendingDelete;
+
+        await DeleteUserAsync(user);
+    }
+
+    private async Task DeleteUserAsync(AdminUserRow user)
+    {
+        if (!isSuperAdmin ||
+            isProcessing ||
+            !CanManage(user))
+            return;
+
+        isProcessing = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            using var response = await Http.DeleteAsync(
+                $"/api/admin/users/{Uri.EscapeDataString(user.Id)}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = $"Deleted account for {user.FullName}.";
+                userPendingDelete = null;
+
+                if (selectedUser?.Id == user.Id)
+                    selectedUser = null;
+
+                users.RemoveAll(item => item.Id == user.Id);
+                CurrentPage = Math.Min(CurrentPage, TotalPages);
+            }
+            else
+            {
+                errorMessage =
+                    $"Account deletion failed (HTTP {(int)response.StatusCode}).";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not connect to the backend.";
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task LoadUsersAfterActionAsync()
+    {
+        // Preserve the success message while refreshing the list.
+        var message = successMessage;
+        await LoadUsersAsync();
+        successMessage = message;
+    }
+
+    private Task HandlePageChanged(int page)
+    {
+        CurrentPage = page;
+        return Task.CompletedTask;
+    }
+
+    private Task HandlePageSizeChanged(int pageSize)
+    {
+        PageSize = pageSize;
+        CurrentPage = 1;
+        return Task.CompletedTask;
+    }
+
+    private sealed class AdminUserRow
+    {
+        public string Id { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public List<string> Roles { get; set; } = new();
+        public bool IsActive { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public int SimulationCount { get; set; }
+    }
+
+    private sealed class GeneralSettingsResponse
+    {
+        public bool ShowTipsOnStartup { get; set; }
+        public bool AutoSaveResults { get; set; }
+        public bool ConfirmBeforeDeleting { get; set; }
+    }
+}

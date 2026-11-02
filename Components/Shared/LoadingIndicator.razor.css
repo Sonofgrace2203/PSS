@@ -1,0 +1,61 @@
+/* Reusable PSS Loading Indicator */
+
+.pss-inline-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 25px 15px;
+    width: 100%;
+}
+
+.pss-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.pss-spinner span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #00aaff;
+    box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+    animation: pss-dot-pulse 1.2s ease-in-out infinite;
+}
+
+.pss-spinner span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.pss-spinner span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.pss-inline-loader p {
+    margin: 0;
+    color: var(--cl-secondary, #829ab1);
+    font-size: 12px;
+    text-align: center;
+}
+
+@keyframes pss-dot-pulse {
+    0%, 80%, 100% {
+        opacity: 0.35;
+        transform: scale(0.7);
+    }
+
+    40% {
+        opacity: 1;
+        transform: scale(1.25);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pss-spinner span {
+        animation: none;
+        opacity: 1;
+    }
+}

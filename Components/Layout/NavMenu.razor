@@ -1,0 +1,238 @@
+﻿@using pss.Components.Shared
+@using pss.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject AuthService Auth
+@implements IDisposable
+
+@inject NavigationManager Nav
+
+<div class="wvg-5">
+    @if (Auth.IsAuthenticated)
+    {
+        <div class="pd shadow-border-5 mgb-5">
+            <div class="" style="cursor: pointer;" @onclick='AccessDashboard'>
+                <img src="pss.png" alt="" class="hx-1 wx-1 corner-2">
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="pd shadow-border-5 mgb-5">
+            <div class="" style="cursor: pointer;" @onclick='() => Nav.NavigateTo("")'>
+                <img src="pss.png" alt="" class="hx-1 wx-1 corner-2">
+            </div>
+        </div>
+    }
+
+    @if (Auth.IsAuthenticated)
+    {
+        <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+        <div class="nav-scrollable" style="position: relative;" onclick="document.querySelector('.navbar-toggler').click()">
+            <nav class="nav flex-column">
+                <div class="pd" @onclick="AccessDashboard" style="cursor: pointer;">
+                    <NavLink class="mdi mdi-view-dashboard cl-primary fsz-15 fw-bold" style="text-decoration: none;">
+                        <span class="Dashboard" aria-hidden="true"></span> Dashboard
+                    </NavLink>
+                </div>
+
+                <div class="pd">
+                    <NavLink class="mdi mdi-library cl-primary fsz-15 fw-bold" href="SimulationLibrary"
+                             style="text-decoration: none;">
+                        <span class="" aria-hidden="true"></span> Library
+                    </NavLink>
+                </div>
+
+                <div class="pd">
+                    <NavLink class="mdi mdi-history cl-primary fsz-15 fw-bold" href="SimulationResult"
+                             style="text-decoration: none;">
+                        <span class="" aria-hidden="true"></span> Results
+                    </NavLink>
+                </div>
+
+                @if (canManageUsers)
+                {
+                    <div class="pd">
+                        <NavLink class="mdi mdi-access-point-check cl-primary fsz-15 fw-bold" href="DemoSimulations"
+                                 style="text-decoration: none;">
+                            <span aria-hidden="true"></span> Demo
+                        </NavLink>
+                    </div>
+                }
+
+                @if (canManageUsers)
+                {
+                    <div class="pd">
+                        <NavLink class="mdi mdi-account-group cl-primary fsz-15 fw-bold" href="Users"
+                                 style="text-decoration: none;">
+                            <span aria-hidden="true"></span> Users
+                        </NavLink>
+                    </div>
+                }
+
+                <div class="pd">
+                    <NavLink class="mdi mdi-tools cl-primary fsz-15 fw-bold" href="Settings" style="text-decoration: none;">
+                        <span class="" aria-hidden="true"></span> Settings
+                    </NavLink>
+                </div>
+
+                <div class="pd bg-primary bdr" style="position: absolute; bottom: 0; left: 0; right: 0; cursor: pointer;"
+                     @onclick="HandleConfirmIsLogout">
+                    <NavLink class="mdi mdi-logout cl-white fsz-15 fw-bold" style="text-decoration: none;">
+                        <span class="" aria-hidden="true"></span> Logout
+                    </NavLink>
+                </div>
+            </nav>
+        </div>
+    }
+</div>
+
+
+
+<div class="wvl-5">
+    @if (Auth.IsAuthenticated)
+    {
+        <div class="pd shadow-border-5 mgb-5">
+            <div class="" style="cursor: pointer;" @onclick='AccessDashboard'>
+                <img src="pss.png" alt="" class="hx-05 wx-05 corner-2">
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="pd shadow-border-5 mgb-5">
+            <div class="" style="cursor: pointer;" @onclick='() => Nav.NavigateTo("")'>
+                <img src="pss.png" alt="" class="hx-05 wx-05 corner-2">
+            </div>
+        </div>
+    }
+
+    <input type="checkbox" title="Navigation menu" class="navbar-toggler mdi mdi-menu fsz-35 flex flex-center" />
+
+    @if (Auth.IsAuthenticated)
+    {
+        <div class="nav-scrollable bg-card wx-2 shadow-border-5 slide-in-left"
+             style="position: fixed; top: 70px; right: 0; z-index: 5;"
+             onclick="document.querySelector('.navbar-toggler').click()">
+            <nav class="nav flex-column shadow-border-5 text-center">
+                <div class="pd-5 bdb" @onclick="AccessDashboard" style="cursor: pointer;">
+                    <NavLink class="mdi mdi-view-dashboard cl-primary fsz-15 fw-bold" style="text-decoration: none;">
+                        <span class="Dashboard" aria-hidden="true"></span> Dashboard
+                    </NavLink>
+                </div>
+
+                <div class="pd-5 bdb">
+                    <NavLink class="mdi mdi-library cl-primary fsz-15 fw-bold" href="SimulationLibrary"
+                             style="text-decoration: none;">
+                        <span class="" aria-hidden="true"></span> Library
+                    </NavLink>
+                </div>
+
+                <div class="pd-5 bdb">
+                    <NavLink class="mdi mdi-history cl-primary fsz-15 fw-bold" href="SimulationResult"
+                             style="text-decoration: none;">
+                        <span class="" aria-hidden="true"></span> Results
+                    </NavLink>
+                </div>
+
+                @if (canManageUsers)
+                {
+                    <div class="pd-5 bdb">
+                        <NavLink class="mdi mdi-access-point-check cl-primary fsz-15 fw-bold" href="DemoSimulations"
+                                 style="text-decoration: none;">
+                            <span aria-hidden="true"></span> Demo
+                        </NavLink>
+                    </div>
+                }
+                
+                @if (canManageUsers)
+                {
+                    <div class="pd-5 bdb">
+                        <NavLink class="mdi mdi-account-group cl-primary fsz-15 fw-bold" href="Users"
+                                 style="text-decoration: none;">
+                            <span aria-hidden="true"></span> Users
+                        </NavLink>
+                    </div>
+                }
+
+                <div class="pd-5 bdb">
+                    <NavLink class="mdi mdi-tools cl-primary fsz-15 fw-bold" href="Settings" style="text-decoration: none;">
+                        <span class="" aria-hidden="true"></span> Settings
+                    </NavLink>
+                </div>
+
+                <div class="pd-5 bg-primary" style="cursor: pointer;" @onclick="HandleConfirmIsLogout">
+                    <NavLink class="mdi mdi-tools cl-white fsz-15 fw-bold" style="text-decoration: none;">
+                        <span class="" aria-hidden="true"></span> Logout
+                    </NavLink>
+                </div>
+            </nav>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback ConfirmIsLogout { get; set; }
+
+    public async Task HandleConfirmIsLogout()
+    {
+        await ConfirmIsLogout.InvokeAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        Auth.AuthenticationStateChanged += HandleAuthenticationStateChanged;
+    }
+
+    public void Dispose()
+    {
+        Auth.AuthenticationStateChanged -= HandleAuthenticationStateChanged;
+    }
+
+    private bool canManageUsers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Auth.AuthenticationStateChanged += HandleAuthenticationStateChanged;
+        await UpdateUserPermissionsAsync();
+    }
+
+    private async Task UpdateUserPermissionsAsync()
+    {
+        var authState =
+            await AuthStateProvider.GetAuthenticationStateAsync();
+
+        var user = authState.User;
+
+        canManageUsers =
+            user.IsInRole("Admin") ||
+            user.IsInRole("SuperAdmin");
+    }
+
+    private void HandleAuthenticationStateChanged()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            await UpdateUserPermissionsAsync();
+            StateHasChanged();
+        });
+    }
+
+    private void AccessDashboard()
+    {
+        var currentUser = Auth.CurrentUser;
+
+        if (currentUser?.Roles?.Any(role =>
+                string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) == true)
+        {
+            Nav.NavigateTo("/AdminDashboard");
+        }
+        else
+        {
+            Nav.NavigateTo("/Dashboard");
+        }
+
+    }
+}

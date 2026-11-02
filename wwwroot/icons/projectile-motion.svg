@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Projectile Motion">
+<title>Projectile Motion</title>
+<rect x="2" y="2" width="68" height="68" rx="14" fill="#eff6ff"/>
+<g stroke-linecap="round" stroke-linejoin="round"><path d="M12 48 Q34 5 60 35" fill="none" stroke="#2563eb" stroke-width="3" stroke-dasharray="4 4"/><circle cx="12" cy="48" r="5" fill="#ef4444"/><path d="M8 59h56" stroke="#123b70" stroke-width="3"/></g>
+</svg>

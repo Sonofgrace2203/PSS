@@ -1,0 +1,317 @@
+﻿@page "/"
+@using pss.Components.Shared
+
+@layout HomeMainLayout
+
+@* PSS LANDING PAGE *@
+
+<div class="pss-landing">
+
+    @* NAVIGATION *@
+    <header class="landing-navbar">
+        <a href="/" class="landing-brand">
+            <img src="pss.png" alt="" class="brand-icon">
+            <span>Physics Simulation Studio</span>
+        </a>
+
+        <nav class="landing-nav-links">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#about">About</a>
+        </nav>
+
+        <div class="landing-nav-actions">
+            <button type="button" class="landing-login" @onclick="ShowLogin">
+                Log In
+            </button>
+
+            <button type="button" class="landing-signup" @onclick="ShowSignUp">
+                Get Started
+            </button>
+        </div>
+    </header>
+
+
+    @* HERO SECTION *@
+    <section class="landing-hero">
+        <div class="hero-content">
+
+            <span class="hero-eyebrow">
+                PHYSICS · COMPUTATION · DISCOVERY
+            </span>
+
+            <h1>
+                Understand Physics.
+                <span>Simulate Possibilities.</span>
+            </h1>
+
+            <p class="hero-description">
+                Explore physical systems through interactive simulations,
+                real-time visualizations, numerical data, and analytical tools.
+                Turn equations into experiences with Physics Simulation Studio.
+            </p>
+
+            <div class="hero-actions">
+                <a href="/Demo" class="hero-primary-button">
+                    Try a Demo
+                    <span>→</span>
+                </a>
+
+                <button type="button" class="hero-secondary-button" @onclick="ShowSignUp">
+                    Create Free Account
+                </button>
+            </div>
+
+            <div class="hero-trust-note">
+                <span class="trust-dot"></span>
+                Start exploring without creating an account
+            </div>
+        </div>
+
+        @* SIMULATION PREVIEW *@
+        <div class="hero-visual">
+            <div class="simulation-preview">
+
+                <div class="preview-header">
+                    <div>
+                        <span class="preview-label">LIVE PREVIEW</span>
+                        <h3>Projectile Motion</h3>
+                    </div>
+
+                    <span class="preview-status">DEMO</span>
+                </div>
+
+                <div class="preview-canvas">
+                    <div class="canvas-grid"></div>
+
+                    <svg viewBox="0 0 500 300" class="projectile-illustration" role="img"
+                         aria-label="Illustration of a projectile following a curved trajectory">
+
+                        <defs>
+                            <linearGradient id="trajectoryGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#38bdf8" />
+                                <stop offset="100%" stop-color="#818cf8" />
+                            </linearGradient>
+                        </defs>
+
+                        <path d="M 55 245 Q 250 -65 445 245" fill="none" stroke="url(#trajectoryGradient)"
+                              stroke-width="3" stroke-dasharray="7 7" />
+
+                        <line x1="35" y1="245" x2="465" y2="245" stroke="currentColor" stroke-opacity=".4"
+                              stroke-width="1.5" />
+
+                        <line x1="55" y1="25" x2="55" y2="265" stroke="currentColor" stroke-opacity=".4"
+                              stroke-width="1.5" />
+
+                        <circle cx="55" cy="245" r="7" fill="#38bdf8" />
+
+                        <circle cx="250" cy="90" r="7" fill="#818cf8" />
+
+                        <circle cx="445" cy="245" r="7" fill="#38bdf8" />
+
+                        <text x="65" y="230" fill="currentColor" font-size="12">Launch</text>
+
+                        <text x="265" y="78" fill="currentColor" font-size="12">Peak</text>
+
+                        <text x="395" y="230" fill="currentColor" font-size="12">Landing</text>
+
+                        <text x="250" y="282" fill="currentColor" font-size="12" text-anchor="middle">
+                            Horizontal distance
+                        </text>
+                    </svg>
+                </div>
+
+                <div class="preview-metrics">
+                    <div class="preview-metric">
+                        <span>Initial velocity</span>
+                        <strong>30 m/s</strong>
+                    </div>
+
+                    <div class="preview-metric">
+                        <span>Launch angle</span>
+                        <strong>45°</strong>
+                    </div>
+
+                    <div class="preview-metric">
+                        <span>Gravity</span>
+                        <strong>9.81 m/s²</strong>
+                    </div>
+                </div>
+
+                <div class="preview-footer">
+                    <span>Illustrative trajectory</span>
+                    <span>Explore the simulation →</span>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    @* FEATURES *@
+    <section class="landing-features" id="features">
+        <div class="section-heading">
+            <span class="section-eyebrow">BUILT FOR EXPLORATION</span>
+            <h2>More than a simulation</h2>
+            <p>
+                A workspace for investigating physical systems,
+                interpreting results, and understanding the mathematics
+                behind motion.
+            </p>
+        </div>
+
+        <div class="feature-grid">
+
+            <article class="feature-card">
+                <div class="feature-icon">∑</div>
+                <h3>Numerical Simulation</h3>
+                <p>
+                    Configure physical parameters and calculate
+                    how systems evolve over time.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon">⌁</div>
+                <h3>Interactive Graphs</h3>
+                <p>
+                    Explore trajectories, motion variables, and
+                    other results through visual representations.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon">▤</div>
+                <h3>Data Analysis</h3>
+                <p>
+                    Inspect computed values in tables and
+                    examine the numerical results of a simulation.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon">↗</div>
+                <h3>Export Results</h3>
+                <p>
+                    Export supported simulation results and
+                    keep useful records of your investigations.
+                </p>
+            </article>
+
+        </div>
+    </section>
+
+
+    @* HOW IT WORKS *@
+    <section class="landing-workflow" id="how-it-works">
+        <div class="section-heading">
+            <span class="section-eyebrow">YOUR WORKFLOW</span>
+            <h2>From curiosity to discovery</h2>
+            <p>
+                Start with a demo, explore the results, and create
+                an account when you're ready to build your own library.
+            </p>
+        </div>
+
+        <div class="workflow-grid">
+
+            <article class="workflow-step">
+                <span class="workflow-number">01</span>
+                <h3>Choose a simulation</h3>
+                <p>
+                    Start with a demonstration or open a simulation
+                    available in the workspace.
+                </p>
+            </article>
+
+            <article class="workflow-step">
+                <span class="workflow-number">02</span>
+                <h3>Set your parameters</h3>
+                <p>
+                    Adjust inputs such as velocity, launch angle,
+                    gravity, and time step where supported.
+                </p>
+            </article>
+
+            <article class="workflow-step">
+                <span class="workflow-number">03</span>
+                <h3>Run and analyze</h3>
+                <p>
+                    Calculate the result, inspect the graphs,
+                    and examine the generated data.
+                </p>
+            </article>
+
+            <article class="workflow-step">
+                <span class="workflow-number">04</span>
+                <h3>Save your work</h3>
+                <p>
+                    Sign in or create an account to access
+                    features that require a user account.
+                </p>
+            </article>
+
+        </div>
+    </section>
+
+
+    @* CALL TO ACTION *@
+    <section class="landing-cta" id="about">
+        <div>
+            <span class="section-eyebrow">YOUR NEXT DISCOVERY STARTS HERE</span>
+            <h2>Ready to explore the physics?</h2>
+            <p>
+                Try a demonstration or create an account to begin
+                your own simulation journey.
+            </p>
+        </div>
+
+        <div class="cta-actions">
+            <a href="/Demo" class="hero-primary-button">
+                Explore Demo →
+            </a>
+
+            <button type="button" class="hero-secondary-button" @onclick="ShowSignUp">
+                Join PSS
+            </button>
+        </div>
+    </section>
+
+
+    @* FOOTER *@
+    <footer class="landing-footer">
+        <a href="/" class="landing-brand">
+            <img src="pss.png" alt="" class="brand-icon">
+            <span>Physics Simulation Studio</span>
+        </a>
+
+        <p>
+            Explore. Simulate. Understand.
+        </p>
+
+        <span class="footer-copyright">
+            © @DateTime.Now.Year Physics Simulation Studio
+        </span>
+    </footer>
+
+</div>
+
+<AuthModal IsOpen="@showAuthModal" IsOpenChanged="@((value) => showAuthModal = value)" IsLoginMode="@isLoginMode"
+           IsLoginModeChanged="@((value) => isLoginMode = value)" />
+
+@code {
+    private bool showAuthModal;
+    private bool isLoginMode = true;
+
+    private void ShowLogin()
+    {
+        isLoginMode = true;
+        showAuthModal = true;
+    }
+
+    private void ShowSignUp()
+    {
+        isLoginMode = false;
+        showAuthModal = true;
+    }
+}
