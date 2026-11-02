@@ -62,7 +62,7 @@
         </ul>
 
         <button class="bg-primary cl-white bd-none corner-2 pd fsz-12" style="cursor: pointer;"
-                @onclick='() => Nav.NavigateTo("/SimulationLibrary")'>
+                @onclick='() => Nav.NavigateTo("SimulationLibrary")'>
             Explore Simulations
         </button>
     </div>
@@ -70,7 +70,7 @@
 
 <div class="mgb-5">
     <div class="bg-primary-01 pdl pdr corner-2 colm-25 mgb" style="cursor:pointer;"
-         @onclick='() => Nav.NavigateTo("/SimulationLibrary")'>
+         @onclick='() => Nav.NavigateTo("SimulationLibrary")'>
         <RecentCard Image="icons/quick-start.svg" Title="Quick Start" SubTitle="Jump into a simulation" />
     </div>
 
@@ -377,11 +377,11 @@ else
         if (module.Slug == "projectile")
         {
             Nav.NavigateTo(
-                $"/SimulationWorkSpace?moduleId={module.Id}");
+                $"SimulationWorkSpace?moduleId={module.Id}");
         }
         else
         {
-            Nav.NavigateTo("/SimulationLibrary");
+            Nav.NavigateTo("SimulationLibrary");
         }
     }
 

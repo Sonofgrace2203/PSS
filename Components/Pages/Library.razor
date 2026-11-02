@@ -225,7 +225,7 @@ else
         if (module.Slug != "projectile")
             return;
 
-        Nav.NavigateTo($"/SimulationWorkSpace?moduleId={module.Id}");
+        Nav.NavigateTo($"SimulationWorkSpace?moduleId={module.Id}");
     }
 
     private Task ToggleFavouriteAsync(Guid moduleId)
